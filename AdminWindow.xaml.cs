@@ -14,12 +14,33 @@ using Microsoft.Win32;
 using LessonsManager.Models;
 using LessonsManager.Data;
 using LessonsManager.Controls;
+using System.Runtime.InteropServices; // חדש
 
 namespace LessonsManager
 {
     public partial class AdminWindow : Window
     {
         private readonly LessonRepository _repository;
+
+        // חדש: Import Win32 API functions for kiosk mode restoration
+        [DllImport("user32.dll")]
+        private static extern IntPtr FindWindow(string lpClassName, string lpWindowName);
+        
+        [DllImport("user32.dll")]
+        private static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
+        
+        [DllImport("user32.dll")]
+        private static extern bool SystemParametersInfo(int uiAction, int uiParam, IntPtr pvParam, int fWinIni);
+
+        [DllImport("user32.dll")]
+        private static extern bool PostMessage(IntPtr hWnd, uint Msg, IntPtr wParam, IntPtr lParam);
+
+        [DllImport("user32.dll")]
+        private static extern IntPtr FindWindowEx(IntPtr hwndParent, IntPtr hwndChildAfter, string lpszClass, string lpszWindow);
+
+        private const int SW_SHOW = 5;
+        private const int SPI_SETSCREENSAVERRUNNING = 97;
+        private const uint WM_COMMAND = 0x0111;
 
         public AdminWindow()
         {
@@ -350,6 +371,91 @@ namespace LessonsManager
         private void RootButton_Click(object sender, RoutedEventArgs e)
         {
             LessonsTreeView.NavigateToRoot();
+        }
+
+        // חדש: פונקציה להחזרת המערכת למצב רגיל (יציאה ממצב קיוסק)
+        private void RestoreSystem()
+        {
+            try
+            {
+                // Show taskbar - ניסיון מספר 1: ShowWindow
+                IntPtr taskbarWnd = FindWindow("Shell_TrayWnd", "");
+                if (taskbarWnd != IntPtr.Zero)
+                {
+                    ShowWindow(taskbarWnd, SW_SHOW);
+                    // ניסיון מספר 2: PostMessage
+                    PostMessage(taskbarWnd, WM_COMMAND, (IntPtr)419, IntPtr.Zero);
+                }
+
+                // Show desktop icons
+                IntPtr desktopWnd = FindWindow("Progman", "Program Manager");
+                if (desktopWnd != IntPtr.Zero)
+                {
+                    ShowWindow(desktopWnd, SW_SHOW);
+                    
+                    // נסה למצוא את ה-SysListView32 (אייקוני שולחן העבודה)
+                    IntPtr workerWnd = FindWindowEx(desktopWnd, IntPtr.Zero, "SHELLDLL_DefView", "");
+                    if (workerWnd != IntPtr.Zero)
+                    {
+                        IntPtr listView = FindWindowEx(workerWnd, IntPtr.Zero, "SysListView32", "");
+                        if (listView != IntPtr.Zero)
+                        {
+                            ShowWindow(listView, SW_SHOW);
+                        }
+                    }
+                }
+
+                // Enable screensaver
+                SystemParametersInfo(SPI_SETSCREENSAVERRUNNING, 0, IntPtr.Zero, 0);
+
+                // Restore registry settings
+                RegistryKey? key = Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Policies\System", true);
+                if (key != null)
+                {
+                    try
+                    {
+                        key.DeleteValue("NoAltTab", false);
+                    }
+                    catch { } // Ignore if doesn't exist
+                    
+                    try
+                    {
+                        key.DeleteValue("DisableTaskMgr", false);
+                    }
+                    catch { } // Ignore if doesn't exist
+                    
+                    key.Close();
+                }
+
+                // Force refresh - נסה להפעיל את Explorer מחדש
+                System.Threading.Thread.Sleep(100); // תן זמן למערכת לעבד
+
+                MessageBox.Show("יציאה ממצב קיוסק בוצעה בהצלחה", "יציאה ממצב קיוסק", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Failed to restore system: {ex.Message}");
+                MessageBox.Show($"שגיאה ביציאה ממצב קיוסק: {ex.Message}", "שגיאה", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
+        }
+
+        // חדש: אירוע לחיצה על כפתור יציאה ממצב קיוסק
+        private void ExitKioskButton_Click(object sender, RoutedEventArgs e)
+        {
+            var result = MessageBox.Show(
+                "האם אתה בטוח שברצונך לצאת ממצב קיוסק?\nפעולה זו תחזיר את ה-Taskbar ואת כל אפשרויות המערכת.",
+                "יציאה ממצב קיוסק",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Question);
+
+            if (result == MessageBoxResult.Yes)
+            {
+                // מחזיר את Windows למצב רגיל (taskbar, Alt+Tab, Task Manager וכו')
+                RestoreSystem();
+
+                // שימי לב: אין כאן Application.Current.Shutdown();
+                // האפליקציה נשארת פתוחה, רק מצב הקיוסק הוסר
+            }
         }
     }
 }

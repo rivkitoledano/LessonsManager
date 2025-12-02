@@ -25,6 +25,18 @@
                         Click="BackButton_Click"/>
                 <TextBlock Text="מסך מנהל - ניהול שיעורים" FontSize="28" FontWeight="SemiBold" 
                            Foreground="White" VerticalAlignment="Center"/>
+
+                <!-- כפתור יציאה ממצב קיוסק - למנהל בלבד -->
+                <Button x:Name="ExitKioskButton"
+                        Content="יציאה ממצב קיוסק"
+                        FontSize="14"
+                        Margin="30,0,0,0"
+                        Padding="20,8"
+                        Background="#E67E22"
+                        Foreground="White"
+                        BorderThickness="0"
+                        Cursor="Hand"
+                        Click="ExitKioskButton_Click"/>
             </StackPanel>
         </Border>
         

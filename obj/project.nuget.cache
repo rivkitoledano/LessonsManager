@@ -1,14 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "KZK820FDvZE=",
+  "dgSpecHash": "GViBxK0RVsCRVNIHNZ2ibH8AUopRMWX0oDaO1ezkmqH0SqVXOY2+Q4FO8h48wy4t8TRwQnZhlDn3jl1xf+YoMA==",
   "success": true,
-  "projectFilePath": "C:\\Users\\user1\\Documents\\רבקי לימודים\\LessonsManager\\LessonsManager.csproj",
-  "expectedPackageFiles": [
-    "C:\\Users\\user1\\.nuget\\packages\\microsoft.net.sdk.compilers.toolset\\9.0.201\\microsoft.net.sdk.compilers.toolset.9.0.201.nupkg.sha512",
-    "C:\\Users\\user1\\.nuget\\packages\\microsoft.windowsdesktop.app.ref\\8.0.14\\microsoft.windowsdesktop.app.ref.8.0.14.nupkg.sha512",
-    "C:\\Users\\user1\\.nuget\\packages\\microsoft.netcore.app.ref\\8.0.14\\microsoft.netcore.app.ref.8.0.14.nupkg.sha512",
-    "C:\\Users\\user1\\.nuget\\packages\\microsoft.aspnetcore.app.ref\\8.0.14\\microsoft.aspnetcore.app.ref.8.0.14.nupkg.sha512",
-    "C:\\Users\\user1\\.nuget\\packages\\microsoft.netcore.app.host.win-x64\\8.0.14\\microsoft.netcore.app.host.win-x64.8.0.14.nupkg.sha512"
-  ],
+  "projectFilePath": "C:\\Users\\user1\\Desktop\\‏‏תיקיה חדשה (2)\\LessonsManager\\LessonsManager.csproj",
+  "expectedPackageFiles": [],
   "logs": []
 }
