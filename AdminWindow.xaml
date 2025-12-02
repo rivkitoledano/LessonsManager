@@ -78,7 +78,7 @@
                         
                         <TextBlock Text="בחר קובץ MP3:" FontSize="14" FontWeight="Medium" 
                                    Foreground="#34495E" Margin="0,5"/>
-                        <Grid Margin="0,5,0,25">
+                        <Grid Margin="0,5,0,15">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="Auto"/>
@@ -91,6 +91,23 @@
                                     Background="#3498DB" Foreground="White"
                                     BorderThickness="0" Cursor="Hand"
                                     Click="BrowseButton_Click"/>
+                        </Grid>
+                        
+                        <TextBlock Text="בחר קובץ PDF (אופציונלי):" FontSize="14" FontWeight="Medium" 
+                                   Foreground="#34495E" Margin="0,5"/>
+                        <Grid Margin="0,5,0,25">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBox x:Name="PdfPathTextBox" Grid.Column="0" FontSize="14" Height="36" 
+                                     Background="White" IsReadOnly="True"
+                                     BorderThickness="1" BorderBrush="#DDD"/>
+                            <Button x:Name="BrowsePdfButton" Grid.Column="1" Content="עיין PDF" 
+                                    FontSize="13" Padding="15,8" Margin="10,0,0,0"
+                                    Background="#9B59B6" Foreground="White"
+                                    BorderThickness="0" Cursor="Hand"
+                                    Click="BrowsePdfButton_Click"/>
                         </Grid>
                         
                         <Button x:Name="UploadButton" Content="העלאת שיעור" 

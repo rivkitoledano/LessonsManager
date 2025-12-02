@@ -9,16 +9,19 @@ namespace LessonsManager.Data
         private const string DATA_FOLDER = "LessonsData";
         private const string METADATA_FILE = "lessons_metadata.json";
         private const string AUDIO_FOLDER = "AudioFiles";
+        private const string PDF_FOLDER = "PdfFiles";
         
         private readonly string _dataPath;
         private readonly string _metadataPath;
         private readonly string _audioPath;
+        private readonly string _pdfPath;
 
         public LessonRepository()
         {
             _dataPath = Path.Combine(Environment.CurrentDirectory, DATA_FOLDER);
             _metadataPath = Path.Combine(_dataPath, METADATA_FILE);
             _audioPath = Path.Combine(_dataPath, AUDIO_FOLDER);
+            _pdfPath = Path.Combine(_dataPath, PDF_FOLDER);
             
             InitializeStorage();
         }
@@ -30,6 +33,9 @@ namespace LessonsManager.Data
             
             if (!Directory.Exists(_audioPath))
                 Directory.CreateDirectory(_audioPath);
+            
+            if (!Directory.Exists(_pdfPath))
+                Directory.CreateDirectory(_pdfPath);
         }
 
         public List<SubjectNode> GetAllSubjects()
@@ -75,11 +81,11 @@ namespace LessonsManager.Data
                 .ToList();
         }
 
-        public bool AddLesson(Lesson lesson, string sourceFilePath)
+        public bool AddLesson(Lesson lesson, string sourceFilePath, string? pdfSourcePath = null)
         {
             try
             {
-                // Generate unique filename
+                // Generate unique filename for audio
                 string fileExtension = Path.GetExtension(sourceFilePath);
                 string uniqueFileName = $"{lesson.Id}{fileExtension}";
                 string destinationPath = Path.Combine(_audioPath, uniqueFileName);
@@ -90,6 +96,22 @@ namespace LessonsManager.Data
                 // Set file path and size
                 lesson.FilePath = destinationPath;
                 lesson.FileSize = new FileInfo(destinationPath).Length;
+
+                // Handle PDF file if provided
+                if (!string.IsNullOrEmpty(pdfSourcePath) && File.Exists(pdfSourcePath))
+                {
+                    string pdfExtension = Path.GetExtension(pdfSourcePath);
+                    string uniquePdfName = $"{lesson.Id}_pdf{pdfExtension}";
+                    string pdfDestinationPath = Path.Combine(_pdfPath, uniquePdfName);
+                    
+                    // Copy PDF file
+                    File.Copy(pdfSourcePath, pdfDestinationPath, true);
+                    
+                    // Set PDF path and size
+                    lesson.PdfPath = pdfDestinationPath;
+                    lesson.PdfSize = new FileInfo(pdfDestinationPath).Length;
+                    lesson.HasPdf = true;
+                }
 
                 // Add to metadata
                 var lessons = LoadAllLessons();

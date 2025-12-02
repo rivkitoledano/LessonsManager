@@ -55,7 +55,7 @@ namespace LessonsManager
             EnableKioskMode();
             
             // Initialize navigation
-            LessonsTreeView.FolderChanged += (s, e) => UpdatePathDisplay();
+            LessonsTreeView.FolderChanged += (s, e) => UpdateBreadcrumbDisplay();
         }
 
         private void EnableKioskMode()
@@ -304,33 +304,71 @@ namespace LessonsManager
         }
 
         // Navigation functions
-        private void UpdatePathDisplay()
+        private void UpdateBreadcrumbDisplay()
         {
-            if (LessonsTreeView.CurrentFolder == null)
+            BreadcrumbPanel.Children.Clear();
+            
+            // Add "נתיב:" text
+            var pathLabel = new TextBlock { Text = "נתיב: ", FontSize = 12, FontWeight = FontWeights.Medium, Foreground = new SolidColorBrush(Color.FromRgb(127, 140, 141)) };
+            BreadcrumbPanel.Children.Add(pathLabel);
+            
+            var breadcrumb = LessonsTreeView.GetBreadcrumbPath();
+            
+            if (breadcrumb.Count == 0)
             {
-                PathTextBlock.Text = "שורש";
+                var rootText = new TextBlock { Text = "שיעורים", FontSize = 12, Foreground = new SolidColorBrush(Color.FromRgb(52, 152, 219)) };
+                BreadcrumbPanel.Children.Add(rootText);
             }
             else
             {
-                PathTextBlock.Text = LessonsTreeView.CurrentFolder.FullPath;
+                // Add root
+                var rootButton = new Button { Content = "שיעורים", FontSize = 12, Background = Brushes.Transparent, BorderThickness = new Thickness(0), Foreground = new SolidColorBrush(Color.FromRgb(52, 152, 219)), Cursor = Cursors.Hand };
+                rootButton.Click += (s, e) => LessonsTreeView.NavigateToRoot();
+                BreadcrumbPanel.Children.Add(rootButton);
+                
+                // Add breadcrumb items
+                for (int i = 0; i < breadcrumb.Count; i++)
+                {
+                    // Add separator
+                    var separator = new TextBlock { Text = " / ", FontSize = 12, Foreground = new SolidColorBrush(Color.FromRgb(127, 140, 141)), Margin = new Thickness(5, 0) };
+                    BreadcrumbPanel.Children.Add(separator);
+                    
+                    // Add breadcrumb item
+                    var itemButton = new Button { Content = breadcrumb[i], FontSize = 12, Background = Brushes.Transparent, BorderThickness = new Thickness(0), Foreground = new SolidColorBrush(Color.FromRgb(52, 152, 219)), Cursor = Cursors.Hand };
+                    
+                    // Navigate to this folder level
+                    var targetIndex = i;
+                    itemButton.Click += (s, e) => NavigateToBreadcrumbLevel(targetIndex);
+                    
+                    BreadcrumbPanel.Children.Add(itemButton);
+                }
+            }
+        }
+        
+        private void NavigateToBreadcrumbLevel(int targetIndex)
+        {
+            var breadcrumb = LessonsTreeView.GetBreadcrumbPath();
+            if (targetIndex < 0 || targetIndex >= breadcrumb.Count)
+            {
+                LessonsTreeView.NavigateToRoot();
+                return;
+            }
+            
+            var targetPath = string.Join("/", breadcrumb.Take(targetIndex + 1));
+            var targetFolder = LessonsTreeView.TreeItems.FirstOrDefault(x => x.FullPath == targetPath);
+            if (targetFolder != null)
+            {
+                LessonsTreeView.NavigateToFolder(targetFolder);
             }
         }
 
-        private void NavBackButton_Click(object sender, RoutedEventArgs e)
+        private void DownloadFolderButton_Click(object sender, RoutedEventArgs e)
         {
-            LessonsTreeView.NavigateBack();
-        }
-
-        private void RootButton_Click(object sender, RoutedEventArgs e)
-        {
-            LessonsTreeView.NavigateToRoot();
-        }
-
-        private void BackButton_Click(object sender, RoutedEventArgs e)
-        {
-            // In student mode, we don't allow going back to main window
-            // This method exists only to prevent XAML errors
-            return;
+            if (sender is Button button && button.DataContext is TreeItem folder && folder.IsFolder)
+            {
+                // Navigate into the folder
+                LessonsTreeView.NavigateToFolder(folder);
+            }
         }
     }
 }

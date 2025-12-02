@@ -118,8 +118,7 @@
               "RelativeToolTip": "StudentWindow.xaml.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-12-01T09:45:56.936Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-12-01T09:45:56.936Z"
             },
             {
               "$type": "Document",
@@ -130,8 +129,7 @@
               "ToolTip": "C:\\Users\\user1\\Documents\\\u05E8\u05D1\u05E7\u05D9 \u05DC\u05D9\u05DE\u05D5\u05D3\u05D9\u05DD\\LessonsManager\\AdminWindow.xaml",
               "RelativeToolTip": "AdminWindow.xaml",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003549|",
-              "WhenOpened": "2025-12-01T09:45:45.202Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-12-01T09:45:45.202Z"
             },
             {
               "$type": "Document",
@@ -147,11 +145,11 @@
             },
             {
               "$type": "Bookmark",
-              "Name": "ST:0:0:{c9c0ae26-aa77-11d2-b3f0-0000f87570ee}"
+              "Name": "ST:0:0:{1c64b9c2-e352-428e-a56d-0ace190b99a6}"
             },
             {
               "$type": "Bookmark",
-              "Name": "ST:0:0:{1c64b9c2-e352-428e-a56d-0ace190b99a6}"
+              "Name": "ST:0:0:{c9c0ae26-aa77-11d2-b3f0-0000f87570ee}"
             },
             {
               "$type": "Document",
@@ -163,8 +161,7 @@
               "RelativeToolTip": "AdminLoginWindow.xaml.cs",
               "ViewState": "AgIAAE0AAAAAAAAAAAAswAAAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-12-01T09:46:15.086Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-12-01T09:46:15.086Z"
             },
             {
               "$type": "Document",
@@ -176,8 +173,7 @@
               "RelativeToolTip": "AdminWindow.xaml.cs",
               "ViewState": "AgIAAFwAAAAAAAAAAAAswAAAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-12-01T09:45:35.274Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-12-01T09:45:35.274Z"
             },
             {
               "$type": "Document",
@@ -189,8 +185,7 @@
               "RelativeToolTip": "Controls\\SimpleTreeView.cs",
               "ViewState": "AgIAACkAAAAAAAAAAAAgwAAAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-12-01T09:45:28.906Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-12-01T09:45:28.906Z"
             },
             {
               "$type": "Document",
@@ -202,8 +197,7 @@
               "RelativeToolTip": "Models\\Lesson.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAA8AAAAFAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-11-27T12:34:16.457Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-11-27T12:34:16.457Z"
             },
             {
               "$type": "Document",
@@ -214,8 +208,7 @@
               "ToolTip": "C:\\Users\\user1\\Documents\\\u05E8\u05D1\u05E7\u05D9 \u05DC\u05D9\u05DE\u05D5\u05D3\u05D9\u05DD\\LessonsManager\\AdminLoginWindow.xaml",
               "RelativeToolTip": "AdminLoginWindow.xaml",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003549|",
-              "WhenOpened": "2025-11-27T12:34:06.021Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-11-27T12:34:06.021Z"
             },
             {
               "$type": "Document",
@@ -227,8 +220,7 @@
               "RelativeToolTip": "Data\\LessonRepository.cs",
               "ViewState": "AgIAAFEAAAAAAAAAAAAowD0AAAAQAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-11-27T12:34:32.664Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-11-27T12:34:32.664Z"
             },
             {
               "$type": "Document",
@@ -240,8 +232,7 @@
               "RelativeToolTip": "AssemblyInfo.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-11-27T12:34:02.849Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-11-27T12:34:02.849Z"
             },
             {
               "$type": "Document",
@@ -252,8 +243,7 @@
               "ToolTip": "C:\\Users\\user1\\Documents\\\u05E8\u05D1\u05E7\u05D9 \u05DC\u05D9\u05DE\u05D5\u05D3\u05D9\u05DD\\LessonsManager\\MainWindow.xaml",
               "RelativeToolTip": "MainWindow.xaml",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003549|",
-              "WhenOpened": "2025-11-27T12:11:37.893Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-11-27T12:11:37.893Z"
             },
             {
               "$type": "Document",

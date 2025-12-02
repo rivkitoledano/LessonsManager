@@ -8,8 +8,11 @@ namespace LessonsManager.Models
         public string SubSubject { get; set; } = "";
         public string Year { get; set; } = "";
         public string FilePath { get; set; } = "";
+        public string PdfPath { get; set; } = "";
         public DateTime CreatedAt { get; set; } = DateTime.Now;
         public long FileSize { get; set; } = 0;
+        public long PdfSize { get; set; } = 0;
+        public bool HasPdf { get; set; } = false;
     }
 
     public class SubjectNode

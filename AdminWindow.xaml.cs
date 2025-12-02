@@ -118,6 +118,20 @@ namespace LessonsManager
             }
         }
 
+        private void BrowsePdfButton_Click(object sender, RoutedEventArgs e)
+        {
+            OpenFileDialog openFileDialog = new OpenFileDialog
+            {
+                Filter = "PDF Files (*.pdf)|*.pdf|All files (*.*)|*.*",
+                Title = "בחר קובץ PDF"
+            };
+
+            if (openFileDialog.ShowDialog() == true)
+            {
+                PdfPathTextBox.Text = openFileDialog.FileName;
+            }
+        }
+
         private void UploadButton_Click(object sender, RoutedEventArgs e)
         {
             string subject = SubjectComboBox.Text.Trim();
@@ -125,6 +139,7 @@ namespace LessonsManager
             string lessonTitle = LessonTitleTextBox.Text.Trim();
             string year = (YearComboBox.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? "2024";
             string filePath = FilePathTextBox.Text;
+            string pdfPath = PdfPathTextBox.Text;
 
             if (string.IsNullOrEmpty(subject) || string.IsNullOrEmpty(subSubject) || string.IsNullOrEmpty(lessonTitle))
             {
@@ -140,6 +155,14 @@ namespace LessonsManager
                 return;
             }
 
+            // Check PDF file if provided
+            if (!string.IsNullOrEmpty(pdfPath) && !File.Exists(pdfPath))
+            {
+                UploadStatus.Text = "קובץ ה-PDF שנבחר לא קיים";
+                UploadStatus.Foreground = new SolidColorBrush(Color.FromRgb(243, 156, 18));
+                return;
+            }
+
             try
             {
                 var lesson = new Lesson
@@ -147,10 +170,11 @@ namespace LessonsManager
                     Title = lessonTitle,
                     Subject = subject,
                     SubSubject = subSubject,
-                    Year = year
+                    Year = year,
+                    HasPdf = !string.IsNullOrEmpty(pdfPath)
                 };
 
-                if (_repository.AddLesson(lesson, filePath))
+                if (_repository.AddLesson(lesson, filePath, pdfPath))
                 {
                     UploadStatus.Text = $"השיעור '{lessonTitle}' הועלה בהצלחה!";
                     UploadStatus.Foreground = new SolidColorBrush(Color.FromRgb(39, 174, 96));
@@ -296,6 +320,7 @@ namespace LessonsManager
             SubSubjectComboBox.Text = "";
             YearComboBox.SelectedIndex = 0;
             FilePathTextBox.Clear();
+            PdfPathTextBox.Clear();
         }
 
         protected override void OnClosing(System.ComponentModel.CancelEventArgs e)

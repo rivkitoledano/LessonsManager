@@ -38,5 +38,15 @@
     "FilePath": "C:\\Users\\user1\\Documents\\רבקי לימודים\\LessonsManager\\bin\\Debug\\net8.0-windows\\LessonsData\\AudioFiles\\becda7a8-c9a2-413d-9a90-c2cff0dc8219.mp3",
     "CreatedAt": "2025-11-27T14:38:44.9851398+02:00",
     "FileSize": 9825039
+  },
+  {
+    "Id": "ab5d76cc-cc77-4ef5-a40f-f2f043adb0d4",
+    "Title": "i love jerusalem",
+    "Subject": "rivki",
+    "SubSubject": "tol",
+    "Year": "2024",
+    "FilePath": "C:\\Users\\user1\\Documents\\רבקי לימודים\\LessonsManager\\bin\\Debug\\net8.0-windows\\LessonsData\\AudioFiles\\ab5d76cc-cc77-4ef5-a40f-f2f043adb0d4.mp3",
+    "CreatedAt": "2025-12-02T00:47:24.5629221+02:00",
+    "FileSize": 8053316
   }
 ]

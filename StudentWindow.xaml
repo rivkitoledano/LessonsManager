@@ -18,11 +18,6 @@
         <!-- Header -->
         <Border Grid.Row="0" Background="#2C3E50">
             <StackPanel Orientation="Horizontal" Margin="30,0" VerticalAlignment="Center">
-                <Button Content="← חזור" x:Name="BackButton" 
-                        Background="#E74C3C" Foreground="White" 
-                        Padding="20,12" Margin="0,0,30,0"
-                        BorderThickness="0" Cursor="Hand" FontSize="14"
-                        Click="BackButton_Click"/>
                 <TextBlock Text="מסך תלמיד" FontSize="28" FontWeight="SemiBold" 
                            Foreground="White" VerticalAlignment="Center"/>
             </StackPanel>
@@ -72,36 +67,19 @@
                     <TextBlock Grid.Row="0" Text="שיעורים זמינים" FontSize="22" FontWeight="SemiBold" 
                                Foreground="#2C3E50" Margin="0,0,0,20"/>
                     
-                    <!-- Navigation Bar -->
-                    <Grid Grid.Row="1" Margin="0,0,0,10">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="Auto"/>
-                        </Grid.ColumnDefinitions>
-                        
-                        <Button Grid.Column="0" x:Name="NavBackButton" Content="← חזור" 
-                                FontSize="12" Padding="10,5" 
-                                Background="#95A5A6" Foreground="White"
-                                BorderThickness="0" Cursor="Hand"
-                                Click="NavBackButton_Click"/>
-                        
-                        <TextBlock Grid.Column="1" x:Name="PathTextBlock" Text="שורש" 
-                                   FontSize="14" Foreground="#7F8C8D" 
-                                   VerticalAlignment="Center" Margin="10,0"/>
-                        
-                        <Button Grid.Column="2" x:Name="RootButton" Content="🏠 שורש" 
-                                FontSize="12" Padding="10,5" 
-                                Background="#3498DB" Foreground="White"
-                                BorderThickness="0" Cursor="Hand"
-                                Click="RootButton_Click"/>
-                    </Grid>
+                    <!-- Breadcrumb Navigation -->
+                    <Border Background="#ECF0F1" CornerRadius="8" Padding="10" Margin="0,0,0,15">
+                        <StackPanel Orientation="Horizontal" x:Name="BreadcrumbPanel" VerticalAlignment="Center">
+                            <TextBlock Text="נתיב: " FontSize="12" FontWeight="Medium" Foreground="#7F8C8D"/>
+                            <!-- Breadcrumb items will be added programmatically -->
+                        </StackPanel>
+                    </Border>
                     
-                    <controls:SimpleTreeView x:Name="LessonsTreeView" Grid.Row="2" Height="300" 
+                    <controls:FolderTreeView x:Name="LessonsTreeView" Grid.Row="2" Height="300" 
                                  Background="#F8F9FA" FontSize="13"
                                  BorderThickness="1" BorderBrush="#E1E8ED"
                                  Padding="10">
-                        <controls:SimpleTreeView.ItemTemplate>
+                        <controls:FolderTreeView.ItemTemplate>
                             <DataTemplate>
                                 <Grid Margin="2">
                                     <Grid.ColumnDefinitions>
@@ -114,7 +92,7 @@
                                         <TextBlock FontSize="16" VerticalAlignment="Center" Margin="0,0,5,0">
                                             <TextBlock.Style>
                                                 <Style TargetType="TextBlock">
-                                                    <Setter Property="Text" Value="🎵"/>
+                                                    <Setter Property="Text" Value="📄"/>
                                                     <Style.Triggers>
                                                         <DataTrigger Binding="{Binding Name}" Value="..">
                                                             <Setter Property="Text" Value="⬆️"/>
@@ -126,19 +104,28 @@
                                                 </Style>
                                             </TextBlock.Style>
                                         </TextBlock>
-                                        <TextBlock Text="▶" FontSize="12" VerticalAlignment="Center" 
+                                        <TextBlock Text="{Binding IsExpanded, Converter={StaticResource BoolToExpandSymbolConverter}}" 
+                                                  FontSize="12" VerticalAlignment="Center" 
                                                   Visibility="{Binding IsFolder, Converter={StaticResource BoolToVisibilityConverter}}"/>
                                     </StackPanel>
                                     
                                     <TextBlock Grid.Column="1" Text="{Binding Name}" FontSize="14" VerticalAlignment="Center"/>
                                     
-                                    <TextBlock Grid.Column="2" Text="{Binding YearText}" FontSize="12" 
-                                               Foreground="#7F8C8D" VerticalAlignment="Center" HorizontalAlignment="Right"
-                                               Visibility="{Binding IsFolder, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                                    <StackPanel Grid.Column="2" Orientation="Horizontal">
+                                        <TextBlock Text="{Binding YearText}" FontSize="12" 
+                                                   Foreground="#7F8C8D" VerticalAlignment="Center" HorizontalAlignment="Right"
+                                                   Visibility="{Binding IsFolder, Converter={StaticResource BoolToVisibilityConverter}}"
+                                                   Margin="0,0,10,0"/>
+                                        <Button Content="⬇️" FontSize="12" Padding="5,2" 
+                                                Background="#3498DB" Foreground="White"
+                                                BorderThickness="0" Cursor="Hand"
+                                                Visibility="{Binding IsFolder, Converter={StaticResource BoolToVisibilityConverter}}"
+                                                Click="DownloadFolderButton_Click"/>
+                                    </StackPanel>
                                 </Grid>
                             </DataTemplate>
-                        </controls:SimpleTreeView.ItemTemplate>
-                    </controls:SimpleTreeView>
+                        </controls:FolderTreeView.ItemTemplate>
+                    </controls:FolderTreeView>
                         
                         <Button x:Name="DownloadButton" Content="הורד שיעור נבחר" 
                                 FontSize="15" Padding="35,15" Margin="0,20,0,0"

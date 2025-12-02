@@ -10,6 +10,7 @@
 //------------------------------------------------------------------------------
 
 using LessonsManager;
+using LessonsManager.Converters;
 using System;
 using System.Diagnostics;
 using System.Windows;
@@ -93,7 +94,7 @@ namespace LessonsManager {
                 return;
             }
             _contentLoaded = true;
-            System.Uri resourceLocater = new System.Uri("/LessonsManager;V1.0.0.0;component/adminloginwindow.xaml", System.UriKind.Relative);
+            System.Uri resourceLocater = new System.Uri("/LessonsManager;component/adminloginwindow.xaml", System.UriKind.Relative);
             
             #line 1 "..\..\..\AdminLoginWindow.xaml"
             System.Windows.Application.LoadComponent(this, resourceLocater);
