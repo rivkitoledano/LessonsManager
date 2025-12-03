@@ -1,0 +1,52 @@
+# Visual Studio
+.vs/
+*.user
+*.suo
+
+# Build outputs
+bin/
+obj/
+[Ll]og/
+[Bb]uild/
+[Bb]uilds/
+
+# NuGet
+*.nupkg
+*.nuspec
+packages/
+*.snupkg
+
+# Publish
+publish/
+app.publish/
+*.exe
+*.dll
+*.pdb
+
+# IDE Backups
+*.tmp
+*.bak
+*.swp
+
+# Rider / ReSharper
+.idea/
+*.DotSettings.user
+
+# VS Code
+.vscode/
+
+# Test results
+TestResult*/
+[Test]Results/
+*.coverage
+*.coveragexml
+*.trx
+
+# Generated files
+*.g.dart
+*.generated.cs
+Generated/
+
+# User-specific settings
+*.db
+*.sqlite
