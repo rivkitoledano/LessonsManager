@@ -330,8 +330,7 @@ namespace LessonsManager
                 for (int i = 0; i < breadcrumb.Count; i++)
                 {
                     // Add separator
-                    var separator = new TextBlock { Text = " / ", FontSize = 12, Foreground = new SolidColorBrush(Color.FromRgb(127, 140, 141)), Margin = new Thickness(5, 0) };
-                    BreadcrumbPanel.Children.Add(separator);
+var separator = new TextBlock { Text = " / ", FontSize = 12, Foreground = new SolidColorBrush(Color.FromRgb(127, 140, 141)), Margin = new Thickness(5) };                    BreadcrumbPanel.Children.Add(separator);
                     
                     // Add breadcrumb item
                     var itemButton = new Button { Content = breadcrumb[i], FontSize = 12, Background = Brushes.Transparent, BorderThickness = new Thickness(0), Foreground = new SolidColorBrush(Color.FromRgb(52, 152, 219)), Cursor = Cursors.Hand };
