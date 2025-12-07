@@ -127,13 +127,139 @@ namespace LessonsManager.Data
             }
         }
 
+       
+        public Lesson? GetLessonById(string lessonId)
+        {
+            var lessons = LoadAllLessons();
+            return lessons.FirstOrDefault(l => l.Id == lessonId);
+        }
+
+        public string GetLessonAudioPath(string lessonId)
+        {
+            var lesson = GetLessonById(lessonId);
+            return lesson?.FilePath ?? "";
+        }
+        // ���� �� ������ ��� �-LessonRepository.cs ���:
+
+        // הוסף/החלף את המתודה UpdateLesson ב-LessonRepository.cs שלך
+
+        public bool UpdateLesson(Lesson updatedLesson)
+        {
+            try
+            {
+                // טען את כל השיעורים
+                var lessons = LoadAllLessons();
+
+                // מצא את השיעור לעדכן
+                var existingLesson = lessons.FirstOrDefault(l => l.Id == updatedLesson.Id);
+
+                if (existingLesson == null)
+                    return false;
+
+                // עדכן את הפרטים
+                existingLesson.Title = updatedLesson.Title;
+                existingLesson.Subject = updatedLesson.Subject;
+                existingLesson.SubSubject = updatedLesson.SubSubject;
+                existingLesson.Year = updatedLesson.Year;
+
+                // טיפול בקובץ שמע - אם שונה
+                if (!string.IsNullOrEmpty(updatedLesson.FilePath) &&
+                    updatedLesson.FilePath != existingLesson.FilePath &&
+                    File.Exists(updatedLesson.FilePath))
+                {
+                    // מחק את הקובץ הישן אם קיים
+                    if (File.Exists(existingLesson.FilePath))
+                    {
+                        try
+                        {
+                            File.Delete(existingLesson.FilePath);
+                        }
+                        catch (Exception ex)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"Warning: Could not delete old audio file: {ex.Message}");
+                        }
+                    }
+
+                    // העתק את הקובץ החדש
+                    string fileExtension = Path.GetExtension(updatedLesson.FilePath);
+                    string uniqueFileName = $"{updatedLesson.Id}{fileExtension}";
+                    string destinationPath = Path.Combine(_audioPath, uniqueFileName);
+
+                    File.Copy(updatedLesson.FilePath, destinationPath, true);
+
+                    existingLesson.FilePath = destinationPath;
+                    existingLesson.FileSize = new FileInfo(destinationPath).Length;
+                }
+
+                // טיפול בקובץ PDF
+                if (!string.IsNullOrEmpty(updatedLesson.PdfPath) &&
+                    updatedLesson.PdfPath != existingLesson.PdfPath &&
+                    File.Exists(updatedLesson.PdfPath))
+                {
+                    // מחק את קובץ ה-PDF הישן אם קיים
+                    if (!string.IsNullOrEmpty(existingLesson.PdfPath) && File.Exists(existingLesson.PdfPath))
+                    {
+                        try
+                        {
+                            File.Delete(existingLesson.PdfPath);
+                        }
+                        catch (Exception ex)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"Warning: Could not delete old PDF file: {ex.Message}");
+                        }
+                    }
+
+                    // העתק את קובץ ה-PDF החדש
+                    string pdfExtension = Path.GetExtension(updatedLesson.PdfPath);
+                    string uniquePdfName = $"{updatedLesson.Id}_pdf{pdfExtension}";
+                    string pdfDestinationPath = Path.Combine(_pdfPath, uniquePdfName);
+
+                    File.Copy(updatedLesson.PdfPath, pdfDestinationPath, true);
+
+                    existingLesson.PdfPath = pdfDestinationPath;
+                    existingLesson.PdfSize = new FileInfo(pdfDestinationPath).Length;
+                    existingLesson.HasPdf = true;
+                }
+                else if (string.IsNullOrEmpty(updatedLesson.PdfPath) && existingLesson.HasPdf)
+                {
+                    // המשתמש הסיר את ה-PDF - מחק אותו
+                    if (!string.IsNullOrEmpty(existingLesson.PdfPath) && File.Exists(existingLesson.PdfPath))
+                    {
+                        try
+                        {
+                            File.Delete(existingLesson.PdfPath);
+                        }
+                        catch (Exception ex)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"Warning: Could not delete PDF file: {ex.Message}");
+                        }
+                    }
+
+                    existingLesson.PdfPath = "";
+                    existingLesson.PdfSize = 0;
+                    existingLesson.HasPdf = false;
+                }
+
+                // שמור את השינויים
+                SaveAllLessons(lessons);
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error updating lesson: {ex.Message}");
+                return false;
+            }
+        }
+
+        // גם עדכן את DeleteLesson כדי שימחק גם PDF
         public bool DeleteLesson(string lessonId)
         {
             try
             {
                 var lessons = LoadAllLessons();
                 var lessonToDelete = lessons.FirstOrDefault(l => l.Id == lessonId);
-                
+
                 if (lessonToDelete == null)
                     return false;
 
@@ -141,6 +267,19 @@ namespace LessonsManager.Data
                 if (File.Exists(lessonToDelete.FilePath))
                 {
                     File.Delete(lessonToDelete.FilePath);
+                }
+
+                // Delete PDF file if exists
+                if (lessonToDelete.HasPdf && !string.IsNullOrEmpty(lessonToDelete.PdfPath) && File.Exists(lessonToDelete.PdfPath))
+                {
+                    try
+                    {
+                        File.Delete(lessonToDelete.PdfPath);
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Warning: Could not delete PDF file: {ex.Message}");
+                    }
                 }
 
                 // Remove from metadata
@@ -156,18 +295,19 @@ namespace LessonsManager.Data
             }
         }
 
-        public Lesson? GetLessonById(string lessonId)
+        // �� ��� �� ����� SaveData, ���� �� ����:
+        private void SaveData()
         {
-            var lessons = LoadAllLessons();
-            return lessons.FirstOrDefault(l => l.Id == lessonId);
+            try
+            {
+                var json = JsonSerializer.Serialize(_dataPath, new JsonSerializerOptions { WriteIndented = true });
+                File.WriteAllText(_dataPath, json);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error saving data: {ex.Message}");
+            }
         }
-
-        public string GetLessonAudioPath(string lessonId)
-        {
-            var lesson = GetLessonById(lessonId);
-            return lesson?.FilePath ?? "";
-        }
-
         private List<Lesson> LoadAllLessons()
         {
             try

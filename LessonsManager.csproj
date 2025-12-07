@@ -8,4 +8,17 @@
     <UseWPF>true</UseWPF>
   </PropertyGroup>
 
+  <ItemGroup>
+    <PackageReference Include="MaterialDesignThemes" Version="5.1.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Page Update="Controls\**">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Compile Update="Controls\**">
+      <SubType>Code</SubType>
+    </Compile>
+  </ItemGroup>
+
 </Project>

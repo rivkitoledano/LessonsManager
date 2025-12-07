@@ -1,88 +1,97 @@
-﻿using System.Text;
+﻿using System;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
-using System.Runtime.InteropServices;
+using System.Windows.Shell;
+using MaterialDesignThemes.Wpf;  // Add this for Snackbar
 
 namespace LessonsManager
 {
-    /// <summary>
-    /// Interaction logic for MainWindow.xaml
-    /// </summary>
     public partial class MainWindow : Window
     {
-        [DllImport("user32.dll")]
-        private static extern int FindWindow(string lpClassName, string lpWindowName);
-        
-        [DllImport("user32.dll")]
-        private static extern int ShowWindow(int hwnd, int nCmdShow);
-        
-        [DllImport("user32.dll")]
-        private static extern bool EnableWindow(int hWnd, bool bEnable);
+        // Remove this line - MainSnackbar is already defined in XAML
+        // public Snackbar MainSnackbar { get; private set; }
 
         public MainWindow()
         {
             InitializeComponent();
-            DisableTaskManager();
-            this.KeyDown += MainWindow_KeyDown;
+
+            // Set up window chrome for custom title bar
+            var chrome = new WindowChrome
+            {
+                CaptionHeight = 0,
+                CornerRadius = new CornerRadius(0),
+                GlassFrameThickness = new Thickness(0),
+                ResizeBorderThickness = new Thickness(5),
+                UseAeroCaptionButtons = false
+            };
+
+            WindowChrome.SetWindowChrome(this, chrome);
+
+            // Set up window state changed event
+            StateChanged += MainWindow_StateChanged;
+
+            // Set initial position
+            WindowStartupLocation = WindowStartupLocation.CenterScreen;
         }
 
-        private void DisableTaskManager()
+        private void MainWindow_StateChanged(object sender, EventArgs e)
         {
-            try
-            {
-                int hwnd = FindWindow("Windows.TaskManager", "Task Manager");
-                if (hwnd != 0)
-                {
-                    ShowWindow(hwnd, 0);
-                    EnableWindow(hwnd, false);
-                }
-            }
-            catch
-            {
-                // Ignore errors
-            }
+            // Handle window state changes if needed
         }
 
-        private void MainWindow_KeyDown(object sender, KeyEventArgs e)
+        private void MinimizeButton_Click(object sender, RoutedEventArgs e)
         {
-            // Block Alt+F4, Ctrl+Alt+Delete, etc.
-            if (e.Key == Key.F4 && (Keyboard.Modifiers & ModifierKeys.Alt) == ModifierKeys.Alt)
+            WindowState = WindowState.Minimized;
+        }
+
+        private void CloseButton_Click(object sender, RoutedEventArgs e)
+        {
+            // Show confirmation dialog before closing
+            var result = MessageBox.Show(
+                "האם אתה בטוח שברצונך לסגור את התוכנה?",
+                "אישור יציאה",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Question);
+
+            if (result == MessageBoxResult.Yes)
             {
-                e.Handled = true;
-            }
-            
-            // Block Windows key
-            if (e.Key == Key.LWin || e.Key == Key.RWin)
-            {
-                e.Handled = true;
+                Application.Current.Shutdown();
             }
         }
 
         private void StudentButton_Click(object sender, RoutedEventArgs e)
         {
-            StudentWindow studentWindow = new StudentWindow();
+            var studentWindow = new StudentWindow();
             studentWindow.Show();
             this.Hide();
         }
 
         private void AdminButton_Click(object sender, RoutedEventArgs e)
         {
-            AdminLoginWindow adminLoginWindow = new AdminLoginWindow();
+            var adminLoginWindow = new AdminLoginWindow();
             adminLoginWindow.Show();
             this.Hide();
         }
 
-        protected override void OnClosing(System.ComponentModel.CancelEventArgs e)
+        private void AboutButton_Click(object sender, RoutedEventArgs e)
         {
-            e.Cancel = true;
-            base.OnClosing(e);
+            MessageBox.Show(
+                "מערכת ניהול שיעורים\n\nגרסה 2.0\n\n© 2025 כל הזכויות שמורות",
+                "אודות המערכת",
+                MessageBoxButton.OK,
+                MessageBoxImage.Information);
+        }
+
+        // Enable window dragging
+        protected override void OnMouseLeftButtonDown(MouseButtonEventArgs e)
+        {
+            base.OnMouseLeftButtonDown(e);
+
+            // Begin dragging the window
+            if (e.ButtonState == MouseButtonState.Pressed)
+            {
+                this.DragMove();
+            }
         }
     }
 }

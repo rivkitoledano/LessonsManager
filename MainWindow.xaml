@@ -3,96 +3,160 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:LessonsManager"
+        xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
         mc:Ignorable="d"
-        Title="מנהל שיעורים" Height="600" Width="800"
-        WindowState="Maximized" WindowStyle="None">
-    <Grid Background="#F8F9FA">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="80"/>
-            <RowDefinition Height="*"/>
-            <RowDefinition Height="60"/>
-        </Grid.RowDefinitions>
-        
-        <!-- Header -->
-        <Border Grid.Row="0" Background="#2C3E50">
-            <StackPanel Margin="30,0" VerticalAlignment="Center">
-                <TextBlock Text="מנהל שיעורים" FontSize="32" FontWeight="SemiBold" 
-                           Foreground="White" HorizontalAlignment="Center"/>
-            </StackPanel>
+        Title="מערכת ניהול שיעורים" 
+        WindowStartupLocation="CenterScreen"
+        WindowState="Maximized"
+        WindowStyle="None"
+        ResizeMode="NoResize"
+        Background="#F5F1E8">
+    
+    <Window.Resources>
+        <!-- Brown Color Palette -->
+        <SolidColorBrush x:Key="PrimaryBrown" Color="#6B4423"/>
+        <SolidColorBrush x:Key="SecondaryBrown" Color="#8B5A3C"/>
+        <SolidColorBrush x:Key="LightBrown" Color="#D4A574"/>
+        <SolidColorBrush x:Key="BeigeBackground" Color="#F5F1E8"/>
+        <SolidColorBrush x:Key="DarkText" Color="#3E2723"/>
+    </Window.Resources>
+    
+    <Grid>
+        <!-- Header with Window Controls -->
+        <Border Height="60" Background="{StaticResource PrimaryBrown}" VerticalAlignment="Top">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                
+                <!-- Admin Button - Top Left -->
+                <Button x:Name="AdminButton"
+                        Grid.Column="0"
+                        HorizontalAlignment="Left"
+                        VerticalAlignment="Center"
+                        Margin="20,0,0,0"
+                        Padding="15,8"
+                        Background="#8B5A3C"
+                        Foreground="White"
+                        BorderThickness="0"
+                        Cursor="Hand"
+                        Click="AdminButton_Click">
+                    <StackPanel Orientation="Horizontal">
+                        <materialDesign:PackIcon Kind="ShieldAccount" Width="18" Height="18" Margin="0,0,8,0"/>
+                        <TextBlock Text="כניסה כמנהל" FontSize="13" FontWeight="SemiBold"/>
+                    </StackPanel>
+                </Button>
+                
+                <!-- Window Controls - Top Right -->
+                <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right" 
+                            VerticalAlignment="Center" Margin="0,0,10,0">
+                    <Button x:Name="MinimizeButton" 
+                            Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"
+                            Click="MinimizeButton_Click"
+                            ToolTip="מזער">
+                        <materialDesign:PackIcon Kind="WindowMinimize" Width="20" Height="20" Foreground="White"/>
+                    </Button>
+                    <Button x:Name="CloseButton" 
+                            Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"
+                            Click="CloseButton_Click"
+                            Margin="10,0,0,0"
+                            ToolTip="סגור">
+                        <materialDesign:PackIcon Kind="Close" Width="20" Height="20" Foreground="White"/>
+                    </Button>
+                </StackPanel>
+            </Grid>
         </Border>
         
         <!-- Main Content -->
-        <Grid Grid.Row="1">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="1*"/>
-                <ColumnDefinition Width="1*"/>
-            </Grid.ColumnDefinitions>
+        <Grid Margin="0,60,0,0">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
             
-            <!-- Student Login Card -->
-            <Border Grid.Column="0" Margin="60,40,30,40" Background="White" 
-                    CornerRadius="16">
-                <Border.Effect>
-                    <DropShadowEffect Color="#000000" Direction="270" ShadowDepth="8" 
-                                      BlurRadius="20" Opacity="0.12"/>
-                </Border.Effect>
-                <StackPanel Margin="40" VerticalAlignment="Center">
-                    <Border Width="80" Height="80" CornerRadius="40" 
-                            Background="#3498DB" Margin="0,0,0,30">
-                        <TextBlock Text="👤" FontSize="36" HorizontalAlignment="Center" 
-                                   VerticalAlignment="Center" Foreground="White"/>
-                    </Border>
-                    
-                    <TextBlock Text="כניסה כתלמיד" FontSize="24" FontWeight="SemiBold" 
-                               Foreground="#2C3E50" HorizontalAlignment="Center" Margin="0,0,0,15"/>
-                    
-                    <TextBlock Text="גישה לשיעורים והורדה להתקן" FontSize="14" 
-                               Foreground="#7F8C8D" HorizontalAlignment="Center" 
-                               TextAlignment="Center" Margin="0,0,0,30" TextWrapping="Wrap"/>
-                    
-                    <Button x:Name="StudentButton" Content="היכנס כתלמיד" 
-                            FontSize="16" Padding="50,18" 
-                            Background="#3498DB" Foreground="White"
-                            BorderThickness="0" Cursor="Hand"
-                            Click="StudentButton_Click"/>
-                </StackPanel>
-            </Border>
+            <!-- Header with Books Image -->
+            <StackPanel Grid.Row="0" Margin="0,40,0,0" HorizontalAlignment="Center">
+                <!-- Books Image Placeholder -->
+                <Border Width="180" Height="180" 
+                        Background="White"
+                        CornerRadius="90"
+                        Margin="0,0,0,30"
+                        BorderThickness="3"
+                        BorderBrush="{StaticResource PrimaryBrown}">
+                    <Border.Effect>
+                        <DropShadowEffect BlurRadius="20" ShadowDepth="5" Opacity="0.3" Color="#6B4423"/>
+                    </Border.Effect>
+                    <Viewbox Margin="30">
+                        <TextBlock Text="📚" FontSize="80"/>
+                    </Viewbox>
+                </Border>
+                
+                <!-- Title -->
+                <TextBlock Text="מאגר שיעורים ישיבת מהרי&quot;ל" 
+                           FontSize="36" 
+                           FontWeight="Bold" 
+                           Foreground="{StaticResource PrimaryBrown}"
+                           HorizontalAlignment="Center"
+                           Margin="0,0,0,10"/>
+                
+                <!-- Subtitle -->
+                <TextBlock Text="ברוך הבא" 
+                           FontSize="24" 
+                           FontWeight="SemiBold"
+                           Foreground="{StaticResource SecondaryBrown}"
+                           HorizontalAlignment="Center"/>
+            </StackPanel>
             
-            <!-- Admin Login Card -->
-            <Border Grid.Column="1" Margin="30,40,60,40" Background="White" 
-                    CornerRadius="16">
-                <Border.Effect>
-                    <DropShadowEffect Color="#000000" Direction="270" ShadowDepth="8" 
-                                      BlurRadius="20" Opacity="0.12"/>
-                </Border.Effect>
-                <StackPanel Margin="40" VerticalAlignment="Center">
-                    <Border Width="80" Height="80" CornerRadius="40" 
-                            Background="#E74C3C" Margin="0,0,0,30">
-                        <TextBlock Text="⚙️" FontSize="36" HorizontalAlignment="Center" 
-                                   VerticalAlignment="Center" Foreground="White"/>
-                    </Border>
-                    
-                    <TextBlock Text="כניסה כמנהל" FontSize="24" FontWeight="SemiBold" 
-                               Foreground="#2C3E50" HorizontalAlignment="Center" Margin="0,0,0,15"/>
-                    
-                    <TextBlock Text="ניהול שיעורים והעלאת קבצים" FontSize="14" 
-                               Foreground="#7F8C8D" HorizontalAlignment="Center" 
-                               TextAlignment="Center" Margin="0,0,0,30" TextWrapping="Wrap"/>
-                    
-                    <Button x:Name="AdminButton" Content="היכנס כמנהל" 
-                            FontSize="16" Padding="50,18" 
-                            Background="#E74C3C" Foreground="White"
-                            BorderThickness="0" Cursor="Hand"
-                            Click="AdminButton_Click"/>
-                </StackPanel>
+            <!-- Student Login Button - Center -->
+            <Border Grid.Row="1" 
+                    VerticalAlignment="Center"
+                    HorizontalAlignment="Center"
+                    Margin="0,0,0,80">
+                <Button x:Name="StudentButton"
+                        Padding="60,0"
+                        Background="{StaticResource PrimaryBrown}"
+                        Foreground="White"
+                        BorderThickness="0"
+                        Cursor="Hand"
+                        Click="StudentButton_Click" Height="40" Width="322">
+                    <Button.Effect>
+                        <DropShadowEffect BlurRadius="15" ShadowDepth="5" Opacity="0.3" Color="#6B4423"/>
+                    </Button.Effect>
+                    <Button.Resources>
+                        <Style TargetType="Border">
+                            <Setter Property="CornerRadius" Value="10"/>
+                        </Style>
+                    </Button.Resources>
+                    <StackPanel>
+                        
+                        <TextBlock Text=" כניסה כתלמיד" 
+                                   FontSize="22" 
+                                   FontWeight="Bold"
+                                   HorizontalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
             </Border>
         </Grid>
         
         <!-- Footer -->
-        <Border Grid.Row="2" Background="#ECF0F1">
-            <TextBlock Text="אל תצא מהמסך - האפליקציה פועלת במצב Kiosk • מוגנת מפני יציאה" 
-                       FontSize="12" Foreground="#7F8C8D" 
-                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
+        <Border Grid.Row="1" 
+                VerticalAlignment="Bottom" 
+                Height="50" 
+                Background="{StaticResource PrimaryBrown}" 
+                Opacity="0.9">
+            <TextBlock Text=" 2025 - " 
+                       Foreground="White" 
+                       VerticalAlignment="Center" 
+                       HorizontalAlignment="Center"
+                       FontSize="12"/>
         </Border>
+        
+        <!-- Snackbar for notifications -->
+        <materialDesign:Snackbar x:Name="MainSnackbar" 
+                               MessageQueue="{materialDesign:MessageQueue}"
+                               Margin="0,0,0,20"
+                               VerticalAlignment="Bottom"
+                               HorizontalAlignment="Center"/>
     </Grid>
 </Window>

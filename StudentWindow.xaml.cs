@@ -1,61 +1,87 @@
-using System.Text;
+using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.IO;
+using System.Linq;
+using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
-using System.IO;
-using System.Collections.ObjectModel;
-using System.Runtime.InteropServices;
-using Microsoft.Win32;
-using LessonsManager.Models;
+using System.Windows.Threading;
 using LessonsManager.Data;
-using LessonsManager.Controls;
+using LessonsManager.Models;
+using Microsoft.Win32;
 
 namespace LessonsManager
 {
     public partial class StudentWindow : Window
     {
-        private bool isDeviceConnected = false;
-        private string devicePath = "";
-        private readonly LessonRepository _repository;
+        public class TreeItem
+        {
+            public string Name { get; set; }
+            public string FullPath { get; set; }
+            public string Id { get; set; }
+            public bool IsFolder { get; set; }
+            public int Level { get; set; }
+            public Lesson? Lesson { get; set; }
 
-        // Import Win32 API functions for kiosk mode
+            public TreeItem(string name, string fullPath, string id, bool isFolder, int level, Lesson? lesson = null)
+            {
+                Name = name;
+                FullPath = fullPath;
+                Id = id;
+                IsFolder = isFolder;
+                Level = level;
+                Lesson = lesson;
+            }
+        }
+
+        // Win32 API for kiosk mode
         [DllImport("user32.dll")]
         private static extern int FindWindow(string lpClassName, string lpWindowName);
-        
+
         [DllImport("user32.dll")]
         private static extern int ShowWindow(int hWnd, int nCmdShow);
-        
+
         [DllImport("user32.dll")]
         private static extern bool SystemParametersInfo(int uiAction, int uiParam, IntPtr pvParam, int fWinIni);
 
-        [DllImport("user32.dll")]
-        private static extern int GetWindowLong(IntPtr hWnd, int nIndex);
-        
-        [DllImport("user32.dll")]
-        private static extern int SetWindowLong(IntPtr hWnd, int nIndex, int dwNewLong);
-
         private const int SW_HIDE = 0;
-        private const int SW_SHOW = 5;
         private const int SPI_SETSCREENSAVERRUNNING = 97;
-        private const int GWL_STYLE = -16;
-        private const int WS_SYSMENU = 0x80000;
+
+        private bool isDeviceConnected = false;
+        private string devicePath = "";
+        private readonly LessonRepository _repository;
+        private DispatcherTimer _deviceCheckTimer;
+        private ObservableCollection<TreeItem> _allTreeItems = new ObservableCollection<TreeItem>();
+        private ObservableCollection<TreeItem> _currentFolderItems = new ObservableCollection<TreeItem>();
+        private ObservableCollection<TreeItem> _filteredItems = new ObservableCollection<TreeItem>();
+        private Stack<string> _navigationHistory = new Stack<string>();
+        private string _currentPath = "";
 
         public StudentWindow()
         {
             InitializeComponent();
             _repository = new LessonRepository();
-            
-            // Enable full kiosk mode
+
+            FolderItems.ItemsSource = _filteredItems;
+
+            // Enable kiosk mode
             EnableKioskMode();
-            
-            // Initialize navigation
-            LessonsTreeView.FolderChanged += (s, e) => UpdateBreadcrumbDisplay();
+
+            this.Loaded += (s, e) =>
+            {
+                LoadAvailableLessons();
+                LoadFilterOptions();
+                NavigateToRoot();
+
+                _deviceCheckTimer = new DispatcherTimer();
+                _deviceCheckTimer.Interval = TimeSpan.FromSeconds(2);
+                _deviceCheckTimer.Tick += DeviceCheckTimer_Tick;
+                _deviceCheckTimer.Start();
+            };
+
+            // Prevent closing
+            this.Closing += (s, e) => e.Cancel = true;
         }
 
         private void EnableKioskMode()
@@ -69,21 +95,18 @@ namespace LessonsManager
                     ShowWindow(hWnd, SW_HIDE);
                 }
 
-                // Hide desktop icons
-                int desktopWnd = FindWindow("Progman", "Program Manager");
-                if (desktopWnd != 0)
-                {
-                    ShowWindow(desktopWnd, SW_HIDE);
-                }
-
                 // Disable screensaver
                 SystemParametersInfo(SPI_SETSCREENSAVERRUNNING, 1, IntPtr.Zero, 0);
 
                 // Disable Alt+Tab
-                DisableAltTab();
-                
-                // Disable Ctrl+Alt+Del
-                DisableCtrlAltDel();
+                RegistryKey key = Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Policies\System", true);
+                if (key == null)
+                {
+                    key = Registry.CurrentUser.CreateSubKey(@"Software\Microsoft\Windows\CurrentVersion\Policies\System");
+                }
+                key.SetValue("NoAltTab", 1, RegistryValueKind.DWord);
+                key.SetValue("DisableTaskMgr", 1, RegistryValueKind.DWord);
+                key.Close();
             }
             catch (Exception ex)
             {
@@ -91,115 +114,331 @@ namespace LessonsManager
             }
         }
 
-        private void DisableAltTab()
+        private void LoadFilterOptions()
         {
-            try
+            var subjects = _repository.GetAllSubjects();
+
+            // Load subjects
+            var subjectsList = new List<string> { "הכל" };
+            subjectsList.AddRange(subjects.Select(s => s.Name).Distinct());
+            SubjectFilterComboBox.ItemsSource = subjectsList;
+            SubjectFilterComboBox.SelectedIndex = 0;
+
+            // Load years
+            var yearsList = new List<string> { "הכל" };
+            var allLessons = subjects.SelectMany(s => s.SubSubjects).SelectMany(ss => ss.Lessons);
+            yearsList.AddRange(allLessons.Select(l => l.Year).Distinct().OrderByDescending(y => y));
+            YearFilterComboBox.ItemsSource = yearsList;
+            YearFilterComboBox.SelectedIndex = 0;
+        }
+
+        private void SearchTextBox_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            ApplyFilters();
+        }
+
+        private void SearchButton_Click(object sender, RoutedEventArgs e)
+        {
+            ApplyFilters();
+        }
+
+        private void ToggleFiltersButton_Click(object sender, RoutedEventArgs e)
+        {
+            FiltersPanel.Visibility = FiltersPanel.Visibility == Visibility.Visible
+                ? Visibility.Collapsed
+                : Visibility.Visible;
+        }
+
+        private void FilterChanged(object sender, SelectionChangedEventArgs e)
+        {
+            // Update sub-subjects when subject changes
+            if (sender == SubjectFilterComboBox && SubjectFilterComboBox.SelectedItem != null)
             {
-                RegistryKey key = Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Policies\System", true);
-                if (key == null)
+                string selectedSubject = SubjectFilterComboBox.SelectedItem.ToString();
+                var subSubjectsList = new List<string> { "הכל" };
+
+                if (selectedSubject != "הכל")
                 {
-                    key = Registry.CurrentUser.CreateSubKey(@"Software\Microsoft\Windows\CurrentVersion\Policies\System");
+                    var subject = _repository.GetAllSubjects().FirstOrDefault(s => s.Name == selectedSubject);
+                    if (subject != null)
+                    {
+                        subSubjectsList.AddRange(subject.SubSubjects.Select(ss => ss.Name));
+                    }
                 }
-                key.SetValue("NoAltTab", 1, RegistryValueKind.DWord);
-                key.Close();
+
+                SubSubjectFilterComboBox.ItemsSource = subSubjectsList;
+                SubSubjectFilterComboBox.SelectedIndex = 0;
             }
-            catch (Exception ex)
+
+            ApplyFilters();
+        }
+
+        private void ResetFilters_Click(object sender, RoutedEventArgs e)
+        {
+            SearchTextBox.Text = "";
+            SubjectFilterComboBox.SelectedIndex = 0;
+            SubSubjectFilterComboBox.SelectedIndex = 0;
+            YearFilterComboBox.SelectedIndex = 0;
+            ApplyFilters();
+        }
+
+        private void ApplyFilters()
+        {
+            if (_currentFolderItems == null) return;
+
+            var searchText = SearchTextBox.Text?.ToLower() ?? "";
+            var selectedSubject = SubjectFilterComboBox.SelectedItem?.ToString() ?? "הכל";
+            var selectedSubSubject = SubSubjectFilterComboBox.SelectedItem?.ToString() ?? "הכל";
+            var selectedYear = YearFilterComboBox.SelectedItem?.ToString() ?? "הכל";
+
+            _filteredItems.Clear();
+
+            foreach (var item in _currentFolderItems)
             {
-                System.Diagnostics.Debug.WriteLine($"Failed to disable Alt+Tab: {ex.Message}");
+                bool matches = true;
+
+                // Search filter
+                if (!string.IsNullOrEmpty(searchText))
+                {
+                    matches = item.Name.ToLower().Contains(searchText);
+                }
+
+                // Subject filter
+                if (matches && selectedSubject != "הכל" && item.Lesson != null)
+                {
+                    matches = item.Lesson.Subject == selectedSubject;
+                }
+
+                // SubSubject filter
+                if (matches && selectedSubSubject != "הכל" && item.Lesson != null)
+                {
+                    matches = item.Lesson.SubSubject == selectedSubSubject;
+                }
+
+                // Year filter
+                if (matches && selectedYear != "הכל" && item.Lesson != null)
+                {
+                    matches = item.Lesson.Year == selectedYear;
+                }
+
+                if (matches)
+                {
+                    _filteredItems.Add(item);
+                }
             }
         }
 
-        private void DisableCtrlAltDel()
+        private void DeviceCheckTimer_Tick(object sender, EventArgs e)
         {
-            try
+            bool deviceConnected = CheckForConnectedDevice();
+            if (deviceConnected != isDeviceConnected)
             {
-                RegistryKey key = Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Policies\System", true);
-                if (key == null)
-                {
-                    key = Registry.CurrentUser.CreateSubKey(@"Software\Microsoft\Windows\CurrentVersion\Policies\System");
-                }
-                key.SetValue("DisableTaskMgr", 1, RegistryValueKind.DWord);
-                key.Close();
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Failed to disable Ctrl+Alt+Del: {ex.Message}");
+                isDeviceConnected = deviceConnected;
             }
         }
 
-        private void RestoreSystem()
+        private bool CheckForConnectedDevice()
         {
+            if (string.IsNullOrEmpty(devicePath))
+                return false;
+
             try
             {
-                // Show taskbar
-                int hWnd = FindWindow("Shell_TrayWnd", "");
-                if (hWnd != 0)
-                {
-                    ShowWindow(hWnd, SW_SHOW);
-                }
-
-                // Show desktop icons
-                int desktopWnd = FindWindow("Progman", "Program Manager");
-                if (desktopWnd != 0)
-                {
-                    ShowWindow(desktopWnd, SW_SHOW);
-                }
-
-                // Enable screensaver
-                SystemParametersInfo(SPI_SETSCREENSAVERRUNNING, 0, IntPtr.Zero, 0);
-
-                // Restore registry settings
-                RegistryKey key = Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Policies\System", true);
-                if (key != null)
-                {
-                    key.DeleteValue("NoAltTab", false);
-                    key.DeleteValue("DisableTaskMgr", false);
-                    key.Close();
-                }
+                return Directory.Exists(devicePath);
             }
-            catch (Exception ex)
+            catch
             {
-                System.Diagnostics.Debug.WriteLine($"Failed to restore system: {ex.Message}");
+                return false;
             }
         }
 
-        protected override void OnKeyDown(KeyEventArgs e)
+        private void LoadAvailableLessons()
         {
-            // Block ALL key combinations that could exit
-            if (e.Key == Key.Escape || 
-                e.Key == Key.F4 && (Keyboard.Modifiers & ModifierKeys.Alt) == ModifierKeys.Alt ||
-                e.Key == Key.Tab && (Keyboard.Modifiers & ModifierKeys.Alt) == ModifierKeys.Alt ||
-                e.Key == Key.F11 ||
-                e.Key == Key.System) // Alt key
+            _allTreeItems.Clear();
+            var subjects = _repository.GetAllSubjects();
+
+            foreach (var subject in subjects)
             {
-                e.Handled = true;
+                var subjectItem = new TreeItem(subject.Name, subject.Name, $"subject_{subject.Name}", true, 0);
+                _allTreeItems.Add(subjectItem);
+
+                foreach (var subSubject in subject.SubSubjects)
+                {
+                    var subSubjectPath = $"{subject.Name}/{subSubject.Name}";
+                    var subSubjectItem = new TreeItem(subSubject.Name, subSubjectPath, $"subsubject_{subSubject.Name}", true, 1);
+                    _allTreeItems.Add(subSubjectItem);
+
+                    foreach (var lesson in subSubject.Lessons)
+                    {
+                        var lessonPath = $"{subSubjectPath}/{lesson.Title}";
+                        var lessonItem = new TreeItem($"{lesson.Title} ({lesson.Year})", lessonPath, lesson.Id, false, 2, lesson);
+                        _allTreeItems.Add(lessonItem);
+                    }
+                }
+            }
+        }
+
+        private void NavigateToRoot()
+        {
+            _currentPath = "";
+            _navigationHistory.Clear();
+            UpdateCurrentFolderView();
+            UpdateAddressBar();
+            UpdateNavigationButtons();
+        }
+
+        private void NavigateToFolder(TreeItem folder)
+        {
+            if (!folder.IsFolder)
+                return;
+
+            if (!string.IsNullOrEmpty(_currentPath))
+            {
+                _navigationHistory.Push(_currentPath);
+            }
+
+            _currentPath = folder.FullPath;
+            UpdateCurrentFolderView();
+            UpdateAddressBar();
+            UpdateNavigationButtons();
+        }
+
+        private void UpdateCurrentFolderView()
+        {
+            _currentFolderItems.Clear();
+
+            if (string.IsNullOrEmpty(_currentPath))
+            {
+                var rootItems = _allTreeItems.Where(x => x.Level == 0).ToList();
+                foreach (var item in rootItems)
+                {
+                    _currentFolderItems.Add(item);
+                }
+            }
+            else
+            {
+                var currentLevel = _currentPath.Split('/').Length;
+
+                var items = _allTreeItems.Where(x =>
+                {
+                    if (x.Level != currentLevel)
+                        return false;
+
+                    var parentPath = GetParentPath(x.FullPath);
+                    return parentPath == _currentPath;
+                }).ToList();
+
+                foreach (var item in items)
+                {
+                    _currentFolderItems.Add(item);
+                }
+            }
+
+            ApplyFilters();
+        }
+
+        private string GetParentPath(string fullPath)
+        {
+            var parts = fullPath.Split('/');
+            if (parts.Length <= 1)
+                return "";
+
+            return string.Join("/", parts.Take(parts.Length - 1));
+        }
+
+        private void UpdateAddressBar()
+        {
+            if (string.IsNullOrEmpty(_currentPath))
+            {
+                AddressBar.Text = "שיעורים";
+            }
+            else
+            {
+                AddressBar.Text = "שיעורים > " + _currentPath.Replace("/", " > ");
+            }
+        }
+
+        private void UpdateNavigationButtons()
+        {
+            BackButton.IsEnabled = _navigationHistory.Count > 0 || !string.IsNullOrEmpty(_currentPath);
+            HomeButton.IsEnabled = !string.IsNullOrEmpty(_currentPath);
+        }
+
+        private void ItemButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button button && button.DataContext is TreeItem item)
+            {
+                if (item.IsFolder)
+                {
+                    NavigateToFolder(item);
+                }
+                else
+                {
+                    DownloadLesson(item);
+                }
+            }
+        }
+
+        private void BackButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (_navigationHistory.Count > 0)
+            {
+                _currentPath = _navigationHistory.Pop();
+                UpdateCurrentFolderView();
+                UpdateAddressBar();
+                UpdateNavigationButtons();
+            }
+            else if (!string.IsNullOrEmpty(_currentPath))
+            {
+                var parentPath = GetParentPath(_currentPath);
+                _currentPath = parentPath;
+                UpdateCurrentFolderView();
+                UpdateAddressBar();
+                UpdateNavigationButtons();
+            }
+        }
+
+        private void HomeButton_Click(object sender, RoutedEventArgs e)
+        {
+            NavigateToRoot();
+        }
+
+        private void DownloadLesson(TreeItem lessonItem)
+        {
+            if (!isDeviceConnected || string.IsNullOrEmpty(devicePath))
+            {
+                MessageBox.Show("חבר התקן תחילה", "חיבור התקן", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 
-            base.OnKeyDown(e);
-        }
+            try
+            {
+                string sourcePath = _repository.GetLessonAudioPath(lessonItem.Id);
+                if (File.Exists(sourcePath))
+                {
+                    string fileName = $"{lessonItem.Lesson!.Subject}_{lessonItem.Lesson.SubSubject}_{lessonItem.Lesson.Title}.mp3";
+                    string destinationPath = Path.Combine(devicePath, fileName);
 
-        protected override void OnClosing(System.ComponentModel.CancelEventArgs e)
-        {
-            e.Cancel = true; // Prevent closing
-            base.OnClosing(e);
-        }
+                    File.Copy(sourcePath, destinationPath, true);
 
-        protected override void OnSourceInitialized(EventArgs e)
-        {
-            base.OnSourceInitialized(e);
-            
-            // Remove close button from window
-            var hwnd = new System.Windows.Interop.WindowInteropHelper(this).Handle;
-            var style = GetWindowLong(hwnd, GWL_STYLE);
-            SetWindowLong(hwnd, GWL_STYLE, style & ~WS_SYSMENU);
+                    MessageBox.Show($"השיעור '{lessonItem.Lesson.Title}' הורד בהצלחה להתקן!",
+                        "הורדה הצליחה", MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+                else
+                {
+                    MessageBox.Show("קובץ השיעור לא נמצא", "שגיאה", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"שגיאה בהורדת השיעור: {ex.Message}", "שגיאה", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
 
         private void ConnectDeviceButton_Click(object sender, RoutedEventArgs e)
         {
             if (!isDeviceConnected)
             {
-                // Try to connect to USB device
                 var drives = DriveInfo.GetDrives();
                 foreach (var drive in drives)
                 {
@@ -207,167 +446,45 @@ namespace LessonsManager
                     {
                         isDeviceConnected = true;
                         devicePath = drive.RootDirectory.FullName;
-                        DeviceStatus.Text = $"התקן מחובר: {devicePath}";
-                        DeviceStatus.Foreground = new SolidColorBrush(Colors.LightGreen);
-                        ConnectDeviceButton.Content = "נתק התקן";
-                        ConnectDeviceButton.Background = new SolidColorBrush(Color.FromRgb(231, 76, 60));
-                        LoadAvailableLessons();
+                        NotificationHelper.ShowSuccess($"התקן מחובר בהצלחה: {devicePath}");
+
                         return;
                     }
                 }
 
-                DeviceStatus.Text = "לא נמצא התקן זמין. חבר התקן USB ונסה שוב.";
-                DeviceStatus.Foreground = new SolidColorBrush(Color.FromRgb(243, 156, 18));
+                NotificationHelper.ShowError($"שגיאה בחיבור ההתקן");
             }
             else
             {
-                // Disconnect device
                 isDeviceConnected = false;
                 devicePath = "";
-                DeviceStatus.Text = "לא מחובר להתקן";
-                DeviceStatus.Foreground = new SolidColorBrush(Colors.LightGray);
-                ConnectDeviceButton.Content = "חבר התקן";
-                ConnectDeviceButton.Background = new SolidColorBrush(Color.FromRgb(39, 174, 96));
+                MessageBox.Show("ההתקן נותק", "ניתוק התקן", MessageBoxButton.OK, MessageBoxImage.Information);
             }
         }
 
-        private void LoadAvailableLessons()
+        private void Logout_Click(object sender, RoutedEventArgs e)
         {
-            var treeItems = new ObservableCollection<TreeItem>();
-            var subjects = _repository.GetAllSubjects();
-            
-            foreach (var subject in subjects)
-            {
-                var subjectItem = new TreeItem(subject.Name, subject.Name, $"subject_{subject.Name}", true, 0);
-                treeItems.Add(subjectItem);
-                
-                foreach (var subSubject in subject.SubSubjects)
-                {
-                    var subSubjectPath = $"{subject.Name}/{subSubject.Name}";
-                    var subSubjectItem = new TreeItem(subSubject.Name, subSubjectPath, $"subsubject_{subSubject.Name}", true, 1);
-                    treeItems.Add(subSubjectItem);
-                    
-                    foreach (var lesson in subSubject.Lessons)
-                    {
-                        var lessonPath = $"{subSubjectPath}/{lesson.Title}";
-                        var lessonItem = new TreeItem($"{lesson.Title} ({lesson.Year})", lessonPath, lesson.Id, false, 2, lesson);
-                        treeItems.Add(lessonItem);
-                    }
-                }
-            }
-            
-            LessonsTreeView.TreeItems = treeItems;
-        }
+            var messageBox = new CustomMessageBox(
+                "אישור התנתקות",
+                "האם אתה בטוח שברצונך להתנתק?",
+                MessageType.Question,
+                MessageButtons.YesNo);
 
-        private void DownloadButton_Click(object sender, RoutedEventArgs e)
-        {
-            if (LessonsTreeView.SelectedItem == null)
-            {
-                MessageBox.Show("אנא בחר שיעור להורדה", "בחירת שיעור", MessageBoxButton.OK, MessageBoxImage.Information);
-                return;
-            }
+            var result = messageBox.ShowDialog();
 
-            if (LessonsTreeView.SelectedItem is TreeItem selectedItem && !selectedItem.IsFolder)
+            if (result == MessageDialogResult.Yes) // Fix: Changed comparison to use MessageDialogResult instead of MessageBoxResult  
             {
-                if (!isDeviceConnected || string.IsNullOrEmpty(devicePath))
-                {
-                    MessageBox.Show("חבר התקן תחילה", "חיבור התקן", MessageBoxButton.OK, MessageBoxImage.Warning);
-                    return;
-                }
-
-                try
-                {
-                    string sourcePath = _repository.GetLessonAudioPath(selectedItem.Id);
-                    if (File.Exists(sourcePath))
-                    {
-                        string fileName = $"{selectedItem.Lesson!.Subject}_{selectedItem.Lesson.SubSubject}_{selectedItem.Lesson.Title}.mp3";
-                        string destinationPath = System.IO.Path.Combine(devicePath, fileName);
-
-                        File.Copy(sourcePath, destinationPath, true);
-                        
-                        MessageBox.Show($"השיעור '{selectedItem.Lesson.Title}' הורד בהצלחה להתקן!", "הורדה הצליחה", MessageBoxButton.OK, MessageBoxImage.Information);
-                    }
-                    else
-                    {
-                        MessageBox.Show("קובץ השיעור לא נמצא", "שגיאה", MessageBoxButton.OK, MessageBoxImage.Error);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show($"שגיאה בהורדת השיעור: {ex.Message}", "שגיאה", MessageBoxButton.OK, MessageBoxImage.Error);
-                }
-            }
-            else
-            {
-                MessageBox.Show("ניתן להוריד רק שיעורים ספציפיים", "הורדת שיעור", MessageBoxButton.OK, MessageBoxImage.Information);
+                _deviceCheckTimer?.Stop();
+                var mainWindow = new MainWindow();
+                mainWindow.Show();
+                this.Close();
             }
         }
 
-        // Navigation functions
-        private void UpdateBreadcrumbDisplay()
+        protected override void OnClosed(EventArgs e)
         {
-            BreadcrumbPanel.Children.Clear();
-            
-            // Add "נתיב:" text
-            var pathLabel = new TextBlock { Text = "נתיב: ", FontSize = 12, FontWeight = FontWeights.Medium, Foreground = new SolidColorBrush(Color.FromRgb(127, 140, 141)) };
-            BreadcrumbPanel.Children.Add(pathLabel);
-            
-            var breadcrumb = LessonsTreeView.GetBreadcrumbPath();
-            
-            if (breadcrumb.Count == 0)
-            {
-                var rootText = new TextBlock { Text = "שיעורים", FontSize = 12, Foreground = new SolidColorBrush(Color.FromRgb(52, 152, 219)) };
-                BreadcrumbPanel.Children.Add(rootText);
-            }
-            else
-            {
-                // Add root
-                var rootButton = new Button { Content = "שיעורים", FontSize = 12, Background = Brushes.Transparent, BorderThickness = new Thickness(0), Foreground = new SolidColorBrush(Color.FromRgb(52, 152, 219)), Cursor = Cursors.Hand };
-                rootButton.Click += (s, e) => LessonsTreeView.NavigateToRoot();
-                BreadcrumbPanel.Children.Add(rootButton);
-                
-                // Add breadcrumb items
-                for (int i = 0; i < breadcrumb.Count; i++)
-                {
-                    // Add separator
-var separator = new TextBlock { Text = " / ", FontSize = 12, Foreground = new SolidColorBrush(Color.FromRgb(127, 140, 141)), Margin = new Thickness(5) };                    BreadcrumbPanel.Children.Add(separator);
-                    
-                    // Add breadcrumb item
-                    var itemButton = new Button { Content = breadcrumb[i], FontSize = 12, Background = Brushes.Transparent, BorderThickness = new Thickness(0), Foreground = new SolidColorBrush(Color.FromRgb(52, 152, 219)), Cursor = Cursors.Hand };
-                    
-                    // Navigate to this folder level
-                    var targetIndex = i;
-                    itemButton.Click += (s, e) => NavigateToBreadcrumbLevel(targetIndex);
-                    
-                    BreadcrumbPanel.Children.Add(itemButton);
-                }
-            }
-        }
-        
-        private void NavigateToBreadcrumbLevel(int targetIndex)
-        {
-            var breadcrumb = LessonsTreeView.GetBreadcrumbPath();
-            if (targetIndex < 0 || targetIndex >= breadcrumb.Count)
-            {
-                LessonsTreeView.NavigateToRoot();
-                return;
-            }
-            
-            var targetPath = string.Join("/", breadcrumb.Take(targetIndex + 1));
-            var targetFolder = LessonsTreeView.TreeItems.FirstOrDefault(x => x.FullPath == targetPath);
-            if (targetFolder != null)
-            {
-                LessonsTreeView.NavigateToFolder(targetFolder);
-            }
-        }
-
-        private void DownloadFolderButton_Click(object sender, RoutedEventArgs e)
-        {
-            if (sender is Button button && button.DataContext is TreeItem folder && folder.IsFolder)
-            {
-                // Navigate into the folder
-                LessonsTreeView.NavigateToFolder(folder);
-            }
+            _deviceCheckTimer?.Stop();
+            base.OnClosed(e);
         }
     }
 }

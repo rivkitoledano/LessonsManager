@@ -1,0 +1,411 @@
+﻿<Window x:Class="LessonsManager.AddEditLessonDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+        Title="ניהול שיעור"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize"
+        SizeToContent="Height"
+        Width="700"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        FlowDirection="RightToLeft">
+
+    <Window.Resources>
+        <SolidColorBrush x:Key="PrimaryBrown" Color="#6B4423" />
+        <SolidColorBrush x:Key="SecondaryBrown" Color="#8B5A3C" />
+        <SolidColorBrush x:Key="LightBrown" Color="#D4A574" />
+    </Window.Resources>
+
+    <Border Background="White"
+            CornerRadius="16"
+            Margin="20">
+        <Border.Effect>
+            <DropShadowEffect Color="#000000"
+                              Direction="270"
+                              ShadowDepth="10"
+                              BlurRadius="30"
+                              Opacity="0.25" />
+        </Border.Effect>
+
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <!-- Header -->
+            <Border Grid.Row="0"
+                    Background="{StaticResource PrimaryBrown}"
+                    CornerRadius="16,16,0,0"
+                    Padding="30,20">
+                <Grid>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <materialDesign:PackIcon x:Name="HeaderIcon"
+                                                 Kind="Plus"
+                                                 Width="28"
+                                                 Height="28"
+                                                 Foreground="White"
+                                                 VerticalAlignment="Center"
+                                                 Margin="0,0,12,0" />
+                        <TextBlock x:Name="DialogTitle"
+                                   Text="הוספת שיעור חדש"
+                                   FontSize="22"
+                                   FontWeight="Bold"
+                                   Foreground="White"
+                                   VerticalAlignment="Center" />
+                    </StackPanel>
+
+                    <Button HorizontalAlignment="Left"
+                            Background="Transparent"
+                            BorderThickness="0"
+                            Padding="8"
+                            Cursor="Hand"
+                            Click="CloseButton_Click"
+                            ToolTip="סגור">
+                        <materialDesign:PackIcon Kind="Close"
+                                                 Width="20"
+                                                 Height="20"
+                                                 Foreground="White" />
+                    </Button>
+                </Grid>
+            </Border>
+
+            <!-- Content -->
+            <ScrollViewer Grid.Row="1"
+                          VerticalScrollBarVisibility="Auto"
+                          Padding="35,30,35,25">
+                <StackPanel>
+                    <!-- Title Field -->
+                    <TextBlock Text="כותרת השיעור *"
+                               FontSize="15"
+                               FontWeight="SemiBold"
+                               Foreground="{StaticResource PrimaryBrown}"
+                               Margin="0,0,0,10" />
+                    <Border Background="White"
+                            BorderBrush="{StaticResource LightBrown}"
+                            BorderThickness="2"
+                            CornerRadius="10"
+                            Margin="0,0,0,20">
+                        <TextBox x:Name="TitleTextBox"
+                                 FontSize="15"
+                                 Padding="15,12"
+                                 BorderThickness="0"
+                                 Background="Transparent"
+                                 VerticalContentAlignment="Center"
+                                 TextWrapping="Wrap"
+                                 Height="48" />
+                    </Border>
+
+                    <!-- Subject Field -->
+                    <TextBlock Text="נושא ראשי *"
+                               FontSize="15"
+                               FontWeight="SemiBold"
+                               Foreground="{StaticResource PrimaryBrown}"
+                               Margin="0,0,0,10" />
+                    <Border Background="White"
+                            BorderBrush="{StaticResource LightBrown}"
+                            BorderThickness="2"
+                            CornerRadius="10"
+                            Margin="0,0,0,20">
+                        <ComboBox x:Name="SubjectComboBox"
+                                  FontSize="15"
+                                  Padding="15,12"
+                                  BorderThickness="0"
+                                  Background="Transparent"
+                                  Height="48"
+                                  SelectionChanged="SubjectComboBox_SelectionChanged">
+                            <ComboBox.ItemContainerStyle>
+                                <Style TargetType="ComboBoxItem">
+                                    <Setter Property="Padding" Value="12,8" />
+                                    <Setter Property="FontSize" Value="14" />
+                                </Style>
+                            </ComboBox.ItemContainerStyle>
+                        </ComboBox>
+                    </Border>
+
+                    <!-- Sub-Subject Field -->
+                    <TextBlock Text="נושא משני *"
+                               FontSize="15"
+                               FontWeight="SemiBold"
+                               Foreground="{StaticResource PrimaryBrown}"
+                               Margin="0,0,0,10" />
+                    <Border Background="White"
+                            BorderBrush="{StaticResource LightBrown}"
+                            BorderThickness="2"
+                            CornerRadius="10"
+                            Margin="0,0,0,20">
+                        <ComboBox x:Name="SubSubjectComboBox"
+                                  FontSize="15"
+                                  Padding="15,12"
+                                  BorderThickness="0"
+                                  Background="Transparent"
+                                  Height="48"
+                                  IsEditable="True">
+                            <ComboBox.ItemContainerStyle>
+                                <Style TargetType="ComboBoxItem">
+                                    <Setter Property="Padding" Value="12,8" />
+                                    <Setter Property="FontSize" Value="14" />
+                                </Style>
+                            </ComboBox.ItemContainerStyle>
+                        </ComboBox>
+                    </Border>
+
+                    <!-- Year Field -->
+                    <TextBlock Text="שנה *"
+                               FontSize="15"
+                               FontWeight="SemiBold"
+                               Foreground="{StaticResource PrimaryBrown}"
+                               Margin="0,0,0,10" />
+                    <Border Background="White"
+                            BorderBrush="{StaticResource LightBrown}"
+                            BorderThickness="2"
+                            CornerRadius="10"
+                            Margin="0,0,0,20">
+                        <ComboBox x:Name="YearComboBox"
+                                  FontSize="15"
+                                  Padding="15,12"
+                                  BorderThickness="0"
+                                  Background="Transparent"
+                                  Height="48">
+                            <ComboBox.ItemContainerStyle>
+                                <Style TargetType="ComboBoxItem">
+                                    <Setter Property="Padding" Value="12,8" />
+                                    <Setter Property="FontSize" Value="14" />
+                                </Style>
+                            </ComboBox.ItemContainerStyle>
+                        </ComboBox>
+                    </Border>
+
+                    <!-- Audio File -->
+                    <TextBlock Text="קובץ שמע *"
+                               FontSize="15"
+                               FontWeight="SemiBold"
+                               Foreground="{StaticResource PrimaryBrown}"
+                               Margin="0,0,0,10" />
+                    <Grid Margin="0,0,0,20">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <Border Grid.Column="0"
+                                Background="#F8F8F8"
+                                BorderBrush="{StaticResource LightBrown}"
+                                BorderThickness="2"
+                                CornerRadius="10"
+                                Height="48">
+                            <TextBlock x:Name="AudioFileTextBlock"
+                                       Text="לא נבחר קובץ"
+                                       FontSize="14"
+                                       Foreground="#999"
+                                       VerticalAlignment="Center"
+                                       Margin="15,0" />
+                        </Border>
+
+                        <Button Grid.Column="1"
+                                x:Name="BrowseAudioButton"
+                                Background="{StaticResource SecondaryBrown}"
+                                Foreground="White"
+                                BorderThickness="0"
+                                Padding="25,12"
+                                Margin="12,0,0,0"
+                                FontSize="15"
+                                FontWeight="SemiBold"
+                                Cursor="Hand"
+                                Height="48"
+                                Click="BrowseAudioButton_Click">
+                            <Button.Resources>
+                                <Style TargetType="Border">
+                                    <Setter Property="CornerRadius" Value="10" />
+                                </Style>
+                            </Button.Resources>
+                            <StackPanel Orientation="Horizontal">
+                                <materialDesign:PackIcon Kind="FolderMusic"
+                                                         Width="20" Height="20"
+                                                         VerticalAlignment="Center"
+                                                         Margin="0,0,10,0" />
+                                <TextBlock Text="בחר קובץ" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Button>
+                    </Grid>
+
+                    <!-- PDF File (Optional) -->
+                    <TextBlock Text="קובץ PDF (אופציונלי)"
+                               FontSize="15"
+                               FontWeight="SemiBold"
+                               Foreground="{StaticResource PrimaryBrown}"
+                               Margin="0,0,0,10" />
+                    <Grid Margin="0,0,0,15">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <Border Grid.Column="0"
+                                Background="#F8F8F8"
+                                BorderBrush="#B0BEC5"
+                                BorderThickness="2"
+                                CornerRadius="10"
+                                Height="48">
+                            <TextBlock x:Name="PdfFileTextBlock"
+                                       Text="לא נבחר קובץ"
+                                       FontSize="14"
+                                       Foreground="#999"
+                                       VerticalAlignment="Center"
+                                       Margin="15,0" />
+                        </Border>
+
+                        <Button Grid.Column="1"
+                                x:Name="BrowsePdfButton"
+                                Background="#607D8B"
+                                Foreground="White"
+                                BorderThickness="0"
+                                Padding="25,12"
+                                Margin="12,0,0,0"
+                                FontSize="15"
+                                FontWeight="SemiBold"
+                                Cursor="Hand"
+                                Height="48"
+                                Click="BrowsePdfButton_Click">
+                            <Button.Resources>
+                                <Style TargetType="Border">
+                                    <Setter Property="CornerRadius" Value="10" />
+                                </Style>
+                            </Button.Resources>
+                            <StackPanel Orientation="Horizontal">
+                                <materialDesign:PackIcon Kind="FilePdfBox"
+                                                         Width="20" Height="20"
+                                                         VerticalAlignment="Center"
+                                                         Margin="0,0,10,0" />
+                                <TextBlock Text="בחר PDF" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Button>
+
+                        <Button Grid.Column="2"
+                                x:Name="ClearPdfButton"
+                                Background="Transparent"
+                                Foreground="#D32F2F"
+                                BorderBrush="#D32F2F"
+                                BorderThickness="2"
+                                Padding="12"
+                                Margin="8,0,0,0"
+                                Cursor="Hand"
+                                Height="48"
+                                Click="ClearPdfButton_Click"
+                                ToolTip="הסר PDF"
+                                Visibility="Collapsed">
+                            <Button.Resources>
+                                <Style TargetType="Border">
+                                    <Setter Property="CornerRadius" Value="10" />
+                                </Style>
+                            </Button.Resources>
+                            <materialDesign:PackIcon Kind="Close"
+                                                     Width="20" Height="20" />
+                        </Button>
+                    </Grid>
+
+                    <!-- Info Box -->
+                    <Border Background="#E8F4F8"
+                            BorderBrush="#B3D9E6"
+                            BorderThickness="1"
+                            CornerRadius="10"
+                            Padding="18"
+                            Margin="0,10,0,0">
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="InformationOutline"
+                                                     Width="22" Height="22"
+                                                     Foreground="#0277BD"
+                                                     VerticalAlignment="Top"
+                                                     Margin="0,2,12,0" />
+                            <TextBlock Text="שדות המסומנים ב-* הם שדות חובה. יש למלא את כל הפרטים לפני השמירה."
+                                       FontSize="14"
+                                       Foreground="#01579B"
+                                       TextWrapping="Wrap"
+                                       LineHeight="22"
+                                       VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </ScrollViewer>
+
+            <!-- Footer Buttons -->
+            <Border Grid.Row="2"
+                    Background="#FAFAFA"
+                    CornerRadius="0,0,16,16"
+                    Padding="35,22"
+                    BorderBrush="#E8E8E8"
+                    BorderThickness="0,2,0,0">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+
+                    <!-- Action Buttons -->
+                    <StackPanel Grid.Column="1"
+                                Orientation="Horizontal"
+                                HorizontalAlignment="Left">
+
+                        <Button x:Name="SaveButton"
+                                Background="#4CAF50"
+                                Foreground="White"
+                                BorderThickness="0"
+                                Padding="32,13"
+                                FontSize="15"
+                                FontWeight="Bold"
+                                Cursor="Hand"
+                                Height="48"
+                                Click="SaveButton_Click">
+                            <Button.Resources>
+                                <Style TargetType="{x:Type Border}">
+                                    <Setter Property="CornerRadius" Value="10" />
+                                </Style>
+                            </Button.Resources>
+                            <Button.Effect>
+                                <DropShadowEffect Color="#4CAF50"
+                                                  Direction="270"
+                                                  ShadowDepth="2"
+                                                  BlurRadius="12"
+                                                  Opacity="0.35" />
+                            </Button.Effect>
+                            <StackPanel Orientation="Horizontal">
+                                <materialDesign:PackIcon Kind="ContentSave"
+                                                         Width="20" Height="20"
+                                                         VerticalAlignment="Center"
+                                                         Margin="0,0,10,0" />
+                                <TextBlock x:Name="SaveButtonText"
+                                           Text="שמור שיעור"
+                                           VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Button>
+
+                        <Button x:Name="CancelButton"
+                                Content="ביטול"
+                                Background="Transparent"
+                                Foreground="#666"
+                                BorderBrush="#BDBDBD"
+                                BorderThickness="2"
+                                Padding="28,13"
+                                Margin="0,0,12,0"
+                                FontSize="15"
+                                FontWeight="SemiBold"
+                                Cursor="Hand"
+                                Height="48"
+                                Click="CancelButton_Click">
+                            <Button.Resources>
+                                <Style TargetType="{x:Type Border}">
+                                    <Setter Property="CornerRadius" Value="10" />
+                                </Style>
+                            </Button.Resources>
+                        </Button>
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </Grid>
+    </Border>
+</Window>

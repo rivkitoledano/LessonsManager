@@ -1,250 +1,461 @@
 <Window x:Class="LessonsManager.AdminWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="                                                           "
-        xmlns:local="clr-namespace:LessonsManager"
-        xmlns:controls="clr-namespace:LessonsManager.Controls"
-        Title="מסך מנהל" Height="750" Width="1200"
-        WindowState="Maximized" WindowStyle="None">
-    <Grid Background="#F8F9FA">
+        xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+        Title="מסך מנהל" Height="800" Width="1400"
+        WindowState="Maximized" WindowStyle="None"
+        Background="#F5F1E8">
+
+    <Window.Resources>
+        <SolidColorBrush x:Key="PrimaryBrown" Color="#6B4423"/>
+        <SolidColorBrush x:Key="SecondaryBrown" Color="#8B5A3C"/>
+        <SolidColorBrush x:Key="LightBrown" Color="#D4A574"/>
+        <SolidColorBrush x:Key="HoverBrown" Color="#5A3618"/>
+
+        <!-- Modern Button Style for Icon Buttons -->
+        <Style x:Key="ModernIconButton" TargetType="Button">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Padding" Value="8"/>
+            <Setter Property="Width" Value="36"/>
+            <Setter Property="Height" Value="36"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}"
+                                CornerRadius="8"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" 
+                                            VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#F0F0F0"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Edit Button Style -->
+        <Style x:Key="EditIconButton" TargetType="Button" BasedOn="{StaticResource ModernIconButton}">
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#E3F2FD"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Delete Button Style -->
+        <Style x:Key="DeleteIconButton" TargetType="Button" BasedOn="{StaticResource ModernIconButton}">
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#FFEBEE"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+    </Window.Resources>
+
+    <Grid x:Name="MainGrid">
         <Grid.RowDefinitions>
             <RowDefinition Height="80"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="60"/>
         </Grid.RowDefinitions>
-        
-        <!-- Header -->
-        <Border Grid.Row="0" Background="#2C3E50">
-            <StackPanel Orientation="Horizontal" Margin="30,0" VerticalAlignment="Center">
-                <Button Content="← חזור" x:Name="BackButton" 
-                        Background="#E74C3C" Foreground="White" 
-                        Padding="20,12" Margin="0,0,30,0"
-                        BorderThickness="0" Cursor="Hand" FontSize="14"
-                        Click="BackButton_Click"/>
-                <TextBlock Text="מסך מנהל - ניהול שיעורים" FontSize="28" FontWeight="SemiBold" 
-                           Foreground="White" VerticalAlignment="Center"/>
 
-                <!-- כפתור יציאה ממצב קיוסק - למנהל בלבד -->
-                <Button x:Name="ExitKioskButton"
-                        Content="יציאה ממצב קיוסק"
-                        FontSize="14"
-                        Margin="30,0,0,0"
-                        Padding="20,8"
-                        Background="#E67E22"
-                        Foreground="White"
-                        BorderThickness="0"
-                        Cursor="Hand"
-                        Click="ExitKioskButton_Click"/>
-            </StackPanel>
+        <!-- Header -->
+        <Border Grid.Row="0" Background="{StaticResource PrimaryBrown}">
+            <Border.Effect>
+                <DropShadowEffect Color="#000000" Direction="270" ShadowDepth="2" 
+                                BlurRadius="10" Opacity="0.2"/>
+            </Border.Effect>
+            <Grid Margin="30,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button x:Name="BackButton"
+                            Background="#8B4513"
+                            Foreground="White"
+                            BorderThickness="0"
+                            Padding="18,10"
+                            Margin="0,0,20,0"
+                            FontWeight="SemiBold"
+                            FontSize="14"
+                            Cursor="Hand"
+                            Click="BackButton_Click">
+                        <Button.Resources>
+                            <Style TargetType="Border">
+                                <Setter Property="CornerRadius" Value="8"/>
+                            </Style>
+                        </Button.Resources>
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="ArrowRight" 
+                                                   Width="18" Height="18" 
+                                                   VerticalAlignment="Center"
+                                                   Margin="0,0,8,0"/>
+                            <TextBlock Text="חזור" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                    <materialDesign:PackIcon Kind="ShieldAccount" 
+                                           Width="28" Height="28"
+                                           Foreground="White"
+                                           VerticalAlignment="Center"
+                                           Margin="0,0,12,0"/>
+                    <TextBlock x:Name="HeaderTitle" Text="פאנל ניהול - ישיבת מהרי&quot;ל" 
+                               FontSize="24" FontWeight="Bold" 
+                               Foreground="White" VerticalAlignment="Center"/>
+                </StackPanel>
+
+                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button x:Name="AddLessonButton"
+                            Background="#4CAF50"
+                            Foreground="White"
+                            BorderThickness="0"
+                            Padding="22,5"
+                            Margin="0,0,10,0"
+                            FontSize="15"
+                            FontWeight="SemiBold"
+                            Cursor="Hand"
+                            Click="AddLessonButton_Click">
+                        <Button.Resources>
+                            <Style TargetType="Border">
+                                <Setter Property="CornerRadius" Value="8"/>
+                            </Style>
+                        </Button.Resources>
+                        <Button.Effect>
+                            <DropShadowEffect Color="#000000" Direction="270" 
+                                            ShadowDepth="2" BlurRadius="8" Opacity="0.2"/>
+                        </Button.Effect>
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="Plus" 
+                                                   Width="20" Height="20" 
+                                                   VerticalAlignment="Center"
+                                                   Margin="0,0,8,0"/>
+                            <TextBlock Text="הוסף שיעור" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+
+                    <Button x:Name="PreviewButton"
+                            Background="{StaticResource SecondaryBrown}"
+                            Foreground="White"
+                            BorderThickness="0"
+                            Padding="20,5"
+                            FontSize="14"
+                            FontWeight="SemiBold"
+                            Cursor="Hand"
+                            Click="PreviewButton_Click">
+                        <Button.Resources>
+                            <Style TargetType="Border">
+                                <Setter Property="CornerRadius" Value="8"/>
+                            </Style>
+                        </Button.Resources>
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="Eye" 
+                                                   Width="18" Height="18" 
+                                                   VerticalAlignment="Center"
+                                                   Margin="0,0,8,0"/>
+                            <TextBlock Text="תצוגה מקדימה" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+            </Grid>
         </Border>
-        
-        <!-- Main Content -->
-        <Grid Grid.Row="1">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="1.2*"/>
-                <ColumnDefinition Width="1.8*"/>
-            </Grid.ColumnDefinitions>
-            
-            <!-- Left Panel - Upload Lesson -->
-            <Border Grid.Column="0" Margin="30,30,15,30" Background="White" 
-                    CornerRadius="12">
+
+        <!-- Main Content Area -->
+        <Grid Grid.Row="1" x:Name="ContentArea">
+            <!-- Lessons List (Default View) -->
+            <Border x:Name="LessonsPanel" Background="White" Margin="40,30,40,20" CornerRadius="16">
                 <Border.Effect>
-                    <DropShadowEffect Color="#000000" Direction="270" ShadowDepth="5" 
-                                      BlurRadius="15" Opacity="0.1"/>
+                    <DropShadowEffect Color="#000000" Direction="270" ShadowDepth="4" 
+                                      BlurRadius="20" Opacity="0.08"/>
                 </Border.Effect>
-                <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="30">
-                    <StackPanel>
-                        <TextBlock Text="העלאת שיעור חדש" FontSize="22" FontWeight="SemiBold" 
-                                   Foreground="#2C3E50" Margin="0,0,0,25"/>
-                        
-                        <TextBlock Text="נושא:" FontSize="14" FontWeight="Medium" 
-                                   Foreground="#34495E" Margin="0,5"/>
-                        <ComboBox x:Name="SubjectComboBox" FontSize="14" Height="36" 
-                                  Background="White" Margin="0,5,0,20"
-                                  IsEditable="True" BorderThickness="1" BorderBrush="#DDD"/>
-                        
-                        <TextBlock Text="תת-נושא:" FontSize="14" FontWeight="Medium" 
-                                   Foreground="#34495E" Margin="0,5"/>
-                        <ComboBox x:Name="SubSubjectComboBox" FontSize="14" Height="36" 
-                                  Background="White" Margin="0,5,0,20"
-                                  IsEditable="True" BorderThickness="1" BorderBrush="#DDD"/>
-                        
-                        <TextBlock Text="שם שיעור:" FontSize="14" FontWeight="Medium" 
-                                   Foreground="#34495E" Margin="0,5"/>
-                        <TextBox x:Name="LessonTitleTextBox" FontSize="14" Height="36" 
-                                 Background="White" Margin="0,5,0,20"
-                                 BorderThickness="1" BorderBrush="#DDD"/>
-                        
-                        <TextBlock Text="שנה:" FontSize="14" FontWeight="Medium" 
-                                   Foreground="#34495E" Margin="0,5"/>
-                        <ComboBox x:Name="YearComboBox" FontSize="14" Height="36" 
-                                  Background="White" Margin="0,5,0,20"
-                                  BorderThickness="1" BorderBrush="#DDD">
-                            <ComboBoxItem Content="2024"/>
-                            <ComboBoxItem Content="2023"/>
-                            <ComboBoxItem Content="2022"/>
-                            <ComboBoxItem Content="2021"/>
-                        </ComboBox>
-                        
-                        <TextBlock Text="בחר קובץ MP3:" FontSize="14" FontWeight="Medium" 
-                                   Foreground="#34495E" Margin="0,5"/>
-                        <Grid Margin="0,5,0,15">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
-                            <TextBox x:Name="FilePathTextBox" Grid.Column="0" FontSize="14" Height="36" 
-                                     Background="White" IsReadOnly="True"
-                                     BorderThickness="1" BorderBrush="#DDD"/>
-                            <Button x:Name="BrowseButton" Grid.Column="1" Content="עיין" 
-                                    FontSize="13" Padding="15,8" Margin="10,0,0,0"
-                                    Background="#3498DB" Foreground="White"
-                                    BorderThickness="0" Cursor="Hand"
-                                    Click="BrowseButton_Click"/>
-                        </Grid>
-                        
-                        <TextBlock Text="בחר קובץ PDF (אופציונלי):" FontSize="14" FontWeight="Medium" 
-                                   Foreground="#34495E" Margin="0,5"/>
-                        <Grid Margin="0,5,0,25">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
-                            <TextBox x:Name="PdfPathTextBox" Grid.Column="0" FontSize="14" Height="36" 
-                                     Background="White" IsReadOnly="True"
-                                     BorderThickness="1" BorderBrush="#DDD"/>
-                            <Button x:Name="BrowsePdfButton" Grid.Column="1" Content="עיין PDF" 
-                                    FontSize="13" Padding="15,8" Margin="10,0,0,0"
-                                    Background="#9B59B6" Foreground="White"
-                                    BorderThickness="0" Cursor="Hand"
-                                    Click="BrowsePdfButton_Click"/>
-                        </Grid>
-                        
-                        <Button x:Name="UploadButton" Content="העלאת שיעור" 
-                                FontSize="15" Padding="40,18" 
-                                Background="#27AE60" Foreground="White"
-                                BorderThickness="0" Cursor="Hand"
-                                Click="UploadButton_Click"/>
-                        
-                        <TextBlock x:Name="UploadStatus" FontSize="13" 
-                                   Foreground="#E67E22" Margin="0,15,0,0"
-                                   TextWrapping="Wrap" TextAlignment="Center"/>
+                <Grid Margin="35">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Header Section -->
+                    <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,8">
+                        <TextBlock Text="ניהול שיעורים קיימים" 
+                                   FontSize="24" FontWeight="Bold" 
+                                   Foreground="{StaticResource PrimaryBrown}" TextAlignment="Right" Width="1250"/>
                     </StackPanel>
-                </ScrollViewer>
+
+                    <TextBlock Grid.Row="1" 
+                               Text="רשימת כל השיעורים במערכת • לחץ על הכפתורים לעריכה או מחיקה"
+                               FontSize="13"
+                               Foreground="#666"
+                               Margin="0,0,0,20" TextAlignment="Right"/>
+
+                    <!-- Enhanced Lessons List -->
+                    <ScrollViewer Grid.Row="2" 
+                                VerticalScrollBarVisibility="Auto"
+                                HorizontalScrollBarVisibility="Disabled">
+                        <ListView x:Name="LessonsListView" 
+                                  SelectionMode="Single"
+                                  BorderThickness="0"
+                                  Background="Transparent">
+                            <ListView.ItemContainerStyle>
+                                <Style TargetType="ListViewItem">
+                                    <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                                    <Setter Property="Margin" Value="0,0,0,12"/>
+                                    <Setter Property="Padding" Value="0"/>
+                                    <Setter Property="Template">
+                                        <Setter.Value>
+                                            <ControlTemplate TargetType="ListViewItem">
+                                                <ContentPresenter/>
+                                            </ControlTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Style>
+                            </ListView.ItemContainerStyle>
+                            <ListView.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Background="White" 
+                                            BorderBrush="#E0E0E0"
+                                            BorderThickness="1"
+                                            CornerRadius="12" 
+                                            Padding="20">
+                                        <Border.Effect>
+                                            <DropShadowEffect Color="#000000" Direction="270" 
+                                                            ShadowDepth="2" BlurRadius="10" Opacity="0.05"/>
+                                        </Border.Effect>
+                                        <Border.Style>
+                                            <Style TargetType="Border">
+                                                <Style.Triggers>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter Property="Background" Value="#FAFAFA"/>
+                                                        <Setter Property="BorderBrush" Value="{StaticResource LightBrown}"/>
+                                                    </Trigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Border.Style>
+
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+
+                                            <!-- Icon -->
+                                            <Border Grid.Column="0"
+                                                    Background="#FFF3E0"
+                                                    CornerRadius="10"
+                                                    Width="48" Height="48"
+                                                    VerticalAlignment="Center"
+                                                    Margin="0,0,18,0">
+                                                <materialDesign:PackIcon Kind="Headphones" 
+                                                                        Width="26" Height="26"
+                                                                        Foreground="{StaticResource SecondaryBrown}"
+                                                                        HorizontalAlignment="Center"
+                                                                        VerticalAlignment="Center"/>
+                                            </Border>
+
+                                            <!-- Content -->
+                                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                                                    <TextBlock Text="{Binding Title}" 
+                                                              FontWeight="SemiBold" 
+                                                              FontSize="16"
+                                                              Foreground="#212121"
+                                                              VerticalAlignment="Center"/>
+                                                    <!-- PDF Badge -->
+                                                    <Border Background="#FF5722"
+                                                            CornerRadius="4"
+                                                            Padding="6,2"
+                                                            Margin="10,0,0,0"
+                                                            VerticalAlignment="Center"
+                                                            Visibility="{Binding HasPdf, Converter={StaticResource BoolToVisibilityConverter}}">
+                                                        <StackPanel Orientation="Horizontal">
+                                                            <materialDesign:PackIcon Kind="FilePdfBox" 
+                                                                                   Width="12" Height="12"
+                                                                                   Foreground="White"
+                                                                                   VerticalAlignment="Center"
+                                                                                   Margin="0,0,4,0"/>
+                                                            <TextBlock Text="PDF" 
+                                                                      FontSize="10"
+                                                                      FontWeight="Bold"
+                                                                      Foreground="White"
+                                                                      VerticalAlignment="Center"/>
+                                                        </StackPanel>
+                                                    </Border>
+                                                </StackPanel>
+                                                <StackPanel Orientation="Horizontal">
+                                                    <Border Background="#E8F5E9"
+                                                            CornerRadius="4"
+                                                            Padding="8,3"
+                                                            Margin="0,0,8,0">
+                                                        <TextBlock Text="{Binding Subject}" 
+                                                                  FontSize="12"
+                                                                  FontWeight="Medium"
+                                                                  Foreground="#2E7D32"/>
+                                                    </Border>
+                                                    <Border Background="#E3F2FD"
+                                                            CornerRadius="4"
+                                                            Padding="8,3"
+                                                            Margin="0,0,8,0">
+                                                        <TextBlock Text="{Binding SubSubject}" 
+                                                                  FontSize="12"
+                                                                  FontWeight="Medium"
+                                                                  Foreground="#1565C0"/>
+                                                    </Border>
+                                                    <Border Background="#FFF3E0"
+                                                            CornerRadius="4"
+                                                            Padding="8,3">
+                                                        <TextBlock Text="{Binding Year}" 
+                                                                  FontSize="12"
+                                                                  FontWeight="Medium"
+                                                                  Foreground="#E65100"/>
+                                                    </Border>
+                                                </StackPanel>
+                                            </StackPanel>
+
+                                            <!-- Action Buttons -->
+                                            <StackPanel Grid.Column="2" 
+                                                       Orientation="Horizontal"
+                                                       VerticalAlignment="Center"
+                                                       Margin="10,0,0,0">
+                                                <Button Style="{StaticResource EditIconButton}"
+                                                       Click="EditButton_Click"
+                                                       Tag="{Binding}"
+                                                       ToolTip="ערוך שיעור"
+                                                       Margin="0,0,8,0">
+                                                    <materialDesign:PackIcon Kind="Pencil" 
+                                                                           Width="20" Height="20"
+                                                                           Foreground="#1976D2"/>
+                                                </Button>
+                                                <Button Style="{StaticResource DeleteIconButton}"
+                                                       Click="DeleteButton_Click"
+                                                       Tag="{Binding}"
+                                                       ToolTip="מחק שיעור">
+                                                    <materialDesign:PackIcon Kind="Delete" 
+                                                                           Width="20" Height="20"
+                                                                           Foreground="#D32F2F"/>
+                                                </Button>
+                                            </StackPanel>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ListView.ItemTemplate>
+                        </ListView>
+                    </ScrollViewer>
+                </Grid>
             </Border>
-            
-            <!-- Right Panel - Existing Lessons -->
-            <Border Grid.Column="1" Margin="15,30,30,30" Background="White" 
-                    CornerRadius="12">
+
+            <!-- Student Preview Panel (Hidden by default) -->
+            <Border x:Name="PreviewPanel" 
+                    Visibility="Collapsed" 
+                    Background="White" 
+                    Margin="40,30,40,20" 
+                    CornerRadius="16">
                 <Border.Effect>
-                    <DropShadowEffect Color="#000000" Direction="270" ShadowDepth="5" 
-                                      BlurRadius="15" Opacity="0.1"/>
+                    <DropShadowEffect Color="#000000" Direction="270" ShadowDepth="4" 
+                                      BlurRadius="20" Opacity="0.08"/>
                 </Border.Effect>
-                <Grid Margin="30">
+                <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
-                        <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
-                    
-                    <TextBlock Grid.Row="0" Text="שיעורים קיימים" FontSize="22" FontWeight="SemiBold" 
-                               Foreground="#2C3E50" Margin="0,0,0,20"/>
-                    
-                    <!-- Navigation Bar -->
-                    <Grid Grid.Row="1" Margin="0,0,0,10">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="Auto"/>
-                        </Grid.ColumnDefinitions>
-                        
-                        <Button Grid.Column="0" x:Name="NavBackButton" Content="← חזור" 
-                                FontSize="12" Padding="10,5" 
-                                Background="#95A5A6" Foreground="White"
-                                BorderThickness="0" Cursor="Hand"
-                                Click="NavBackButton_Click"/>
-                        
-                        <TextBlock Grid.Column="1" x:Name="PathTextBlock" Text="שורש" 
-                                   FontSize="14" Foreground="#7F8C8D" 
-                                   VerticalAlignment="Center" Margin="10,0"/>
-                        
-                        <Button Grid.Column="2" x:Name="RootButton" Content="🏠 שורש" 
-                                FontSize="12" Padding="10,5" 
-                                Background="#3498DB" Foreground="White"
-                                BorderThickness="0" Cursor="Hand"
-                                Click="RootButton_Click"/>
-                    </Grid>
-                    
-                    <controls:SimpleTreeView x:Name="LessonsTreeView" Grid.Row="2" Height="400" 
-                                             Padding="15" AllowDrop="True"
-                                             Drop="LessonsTreeView_Drop">
-                        <controls:SimpleTreeView.ItemTemplate>
-                            <DataTemplate>
-                                <Grid Margin="2">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="Auto"/>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                    </Grid.ColumnDefinitions>
-                                    
-                                    <StackPanel Grid.Column="0" Orientation="Horizontal" Margin="0,0,10,0">
-                                        <TextBlock FontSize="16" VerticalAlignment="Center" Margin="0,0,5,0">
-                                            <TextBlock.Style>
-                                                <Style TargetType="TextBlock">
-                                                    <Setter Property="Text" Value="🎵"/>
-                                                    <Style.Triggers>
-                                                        <DataTrigger Binding="{Binding Name}" Value="..">
-                                                            <Setter Property="Text" Value="⬆️"/>
-                                                        </DataTrigger>
-                                                        <DataTrigger Binding="{Binding IsFolder}" Value="True">
-                                                            <Setter Property="Text" Value="📁"/>
-                                                        </DataTrigger>
-                                                    </Style.Triggers>
-                                                </Style>
-                                            </TextBlock.Style>
-                                        </TextBlock>
-                                        <TextBlock Text="▶" FontSize="12" VerticalAlignment="Center" 
-                                                  Visibility="{Binding IsFolder, Converter={StaticResource BoolToVisibilityConverter}}"/>
-                                    </StackPanel>
-                                    
-                                    <TextBlock Grid.Column="1" Text="{Binding Name}" FontSize="14" VerticalAlignment="Center"/>
-                                    
-                                    <TextBlock Grid.Column="2" Text="{Binding YearText}" FontSize="12" 
-                                               Foreground="#7F8C8D" VerticalAlignment="Center" HorizontalAlignment="Right"
-                                               Visibility="{Binding IsFolder, Converter={StaticResource BoolToVisibilityConverter}}"/>
-                                </Grid>
-                            </DataTemplate>
-                        </controls:SimpleTreeView.ItemTemplate>
-                    </controls:SimpleTreeView>
-                    
-                    <TextBlock Grid.Row="1" Text="גרור תיקיות לכאן כדי להעביר לאונקי" 
-                               FontSize="12" Foreground="#95A5A6" 
-                               HorizontalAlignment="Center" VerticalAlignment="Center"
-                               Visibility="Collapsed" x:Name="DropHintText"/>
-                    
-                    <StackPanel Grid.Row="2" Orientation="Horizontal" 
-                                HorizontalAlignment="Center" Margin="0,20,0,0">
-                        <Button x:Name="DeleteButton" Content="מחק שיעור" 
-                                FontSize="13" Padding="25,12" 
-                                Background="#E74C3C" Foreground="White"
-                                BorderThickness="0" Cursor="Hand"
-                                Click="DeleteButton_Click"/>
-                        <Button x:Name="RefreshButton" Content="רענן רשימה" 
-                                FontSize="13" Padding="25,12" Margin="15,0,0,0"
-                                Background="#3498DB" Foreground="White"
-                                BorderThickness="0" Cursor="Hand"
-                                Click="RefreshButton_Click"/>
-                    </StackPanel>
+
+                    <!-- Preview Header -->
+                    <Border Grid.Row="0" 
+                            Background="{StaticResource SecondaryBrown}" 
+                            CornerRadius="16,16,0,0"
+                            Padding="25,18">
+                        <Border.Effect>
+                            <DropShadowEffect Color="#000000" Direction="270" 
+                                            ShadowDepth="2" BlurRadius="8" Opacity="0.15"/>
+                        </Border.Effect>
+                        <StackPanel Orientation="Horizontal">
+                            <Button x:Name="ClosePreviewButton"
+                                    Background="Transparent"
+                                    Foreground="White"
+                                    BorderThickness="1.5"
+                                    BorderBrush="White"
+                                    Padding="16,8"
+                                    FontWeight="SemiBold"
+                                    FontSize="14"
+                                    Cursor="Hand"
+                                    Click="ClosePreviewButton_Click">
+                                <Button.Resources>
+                                    <Style TargetType="Border">
+                                        <Setter Property="CornerRadius" Value="6"/>
+                                    </Style>
+                                </Button.Resources>
+                                <StackPanel Orientation="Horizontal">
+                                    <materialDesign:PackIcon Kind="ArrowRight" 
+                                                           Width="16" Height="16" 
+                                                           VerticalAlignment="Center"
+                                                           Margin="0,0,6,0"/>
+                                    <TextBlock Text="חזור לניהול" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
+                            <materialDesign:PackIcon Kind="Eye" 
+                                                   Width="24" Height="24"
+                                                   Foreground="White"
+                                                   VerticalAlignment="Center"
+                                                   Margin="20,0,10,0"/>
+                            <TextBlock Text="תצוגה מקדימה - מסך תלמידים"
+                                      FontSize="18"
+                                      FontWeight="SemiBold"
+                                      Foreground="White"
+                                      VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Preview Content Container -->
+                    <Border Grid.Row="1" 
+                            Background="#F5F5F5"
+                            Padding="15">
+                        <Border x:Name="StudentPreviewContainer" 
+                                Background="White"
+                                CornerRadius="8">
+                            <Border.Effect>
+                                <DropShadowEffect Color="#000000" Direction="270" 
+                                                ShadowDepth="2" BlurRadius="8" Opacity="0.08"/>
+                            </Border.Effect>
+                        </Border>
+                    </Border>
                 </Grid>
             </Border>
         </Grid>
-        
+
         <!-- Footer -->
         <Border Grid.Row="2" Background="#ECF0F1">
-            <TextBlock Text="כל השיעורים נשמרים באופן מקומי במחשב • ניתן למחוק רק שיעורים ספציפיים" 
-                       FontSize="12" Foreground="#7F8C8D" 
-                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            <Border.Effect>
+                <DropShadowEffect Color="#000000" Direction="90" ShadowDepth="1" 
+                                BlurRadius="5" Opacity="0.1"/>
+            </Border.Effect>
+            <StackPanel Orientation="Horizontal" 
+                       HorizontalAlignment="Center" 
+                       VerticalAlignment="Center">
+                <materialDesign:PackIcon Kind="Information" 
+                                       Width="16" Height="16"
+                                       Foreground="#7F8C8D"
+                                       VerticalAlignment="Center"
+                                       Margin="0,0,8,0"/>
+                <TextBlock Text="כל השיעורים נשמרים באופן מקומי במחשב • ניתן לערוך ולמחוק שיעורים בכל עת" 
+                           FontSize="12" 
+                           Foreground="#7F8C8D" 
+                           VerticalAlignment="Center"/>
+            </StackPanel>
         </Border>
+
+        <!-- Snackbar for notifications -->
+        <materialDesign:Snackbar x:Name="AdminSnackbar" 
+                               MessageQueue="{materialDesign:MessageQueue}"
+                               Margin="0,0,0,80"
+                               VerticalAlignment="Bottom"
+                               HorizontalAlignment="Center"/>
     </Grid>
 </Window>

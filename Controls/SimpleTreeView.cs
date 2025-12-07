@@ -1,10 +1,11 @@
+using System;
+using System.Collections.ObjectModel;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using LessonsManager.Models;
-using System.Collections.ObjectModel;
-using System.Linq;
 
 namespace LessonsManager.Controls
 {
@@ -17,7 +18,7 @@ namespace LessonsManager.Controls
         }
 
         public static readonly DependencyProperty TreeItemsProperty =
-            DependencyProperty.Register(nameof(TreeItems), typeof(ObservableCollection<TreeItem>), 
+            DependencyProperty.Register(nameof(TreeItems), typeof(ObservableCollection<TreeItem>),
                 typeof(SimpleTreeView), new PropertyMetadata(null, OnTreeItemsChanged));
 
         public event EventHandler? FolderChanged;
@@ -29,12 +30,12 @@ namespace LessonsManager.Controls
         }
 
         public static readonly DependencyProperty CurrentFolderProperty =
-            DependencyProperty.Register(nameof(CurrentFolder), typeof(TreeItem), 
+            DependencyProperty.Register(nameof(CurrentFolder), typeof(TreeItem),
                 typeof(SimpleTreeView), new PropertyMetadata(null, OnCurrentFolderChanged));
 
         private static void OnTreeItemsChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
-            if (d is SimpleTreeView treeView)
+            if (d is SimpleTreeView treeView && e.NewValue != null)
             {
                 treeView.RefreshDisplay();
             }
@@ -45,6 +46,7 @@ namespace LessonsManager.Controls
             if (d is SimpleTreeView treeView)
             {
                 treeView.RefreshDisplay();
+                treeView.FolderChanged?.Invoke(treeView, EventArgs.Empty);
             }
         }
 
@@ -59,22 +61,29 @@ namespace LessonsManager.Controls
         protected override void OnPreviewMouseLeftButtonDown(MouseButtonEventArgs e)
         {
             base.OnPreviewMouseLeftButtonDown(e);
-            
+
             var item = GetItemFromPoint(e.GetPosition(this));
-            if (item != null && item.IsFolder)
+            if (item != null)
             {
-                CurrentFolder = item;
+                if (item.Name == "..")
+                {
+                    NavigateBack();
+                }
+                else if (item.IsFolder)
+                {
+                    CurrentFolder = item;
+                }
             }
         }
 
         protected override void OnMouseMove(MouseEventArgs e)
         {
             base.OnMouseMove(e);
-            
+
             if (e.LeftButton == MouseButtonState.Pressed)
             {
                 var item = GetItemFromPoint(e.GetPosition(this));
-                if (item != null)
+                if (item != null && !item.Name.Equals(".."))
                 {
                     DragDrop.DoDragDrop(this, item, DragDropEffects.Copy);
                 }
@@ -97,8 +106,14 @@ namespace LessonsManager.Controls
 
         private void RefreshDisplay()
         {
+            if (TreeItems == null || TreeItems.Count == 0)
+            {
+                this.ItemsSource = new ObservableCollection<TreeItem>();
+                return;
+            }
+
             var displayItems = new ObservableCollection<TreeItem>();
-            
+
             if (CurrentFolder == null)
             {
                 // Show root folders
@@ -113,25 +128,38 @@ namespace LessonsManager.Controls
                 // Show parent folder (for navigation back)
                 if (CurrentFolder.Level > 0)
                 {
-                    var parentPath = string.Join("/", CurrentFolder.FullPath.Split('/').Take(CurrentFolder.FullPath.Split('/').Length - 1));
+                    var pathParts = CurrentFolder.FullPath.Split('/');
+                    var parentPath = string.Join("/", pathParts.Take(pathParts.Length - 1));
                     var parent = TreeItems.FirstOrDefault(x => x.FullPath == parentPath);
-                    if (parent != null)
-                    {
-                        displayItems.Add(new TreeItem("..", parent.FullPath, parent.Id, true, parent.Level - 1));
-                    }
+
+                    // Add back navigation item
+                    displayItems.Add(new TreeItem("..", parentPath, "0", true, CurrentFolder.Level - 1));
                 }
-                
+                else
+                {
+                    // At level 1, back goes to root
+                    displayItems.Add(new TreeItem("..", "", "0", true, -1));
+                }
+
                 // Show items in current folder
-                var currentItems = TreeItems.Where(x => 
-                    x.FullPath.StartsWith(CurrentFolder.FullPath + "/") && 
-                    x.FullPath.Split('/').Length == CurrentFolder.FullPath.Split('/').Length + 1);
-                
-                foreach (var item in currentItems)
+                var currentPath = CurrentFolder.FullPath;
+                var currentLevel = CurrentFolder.Level;
+
+                var currentItems = TreeItems.Where(x =>
+                {
+                    if (!x.FullPath.StartsWith(currentPath + "/"))
+                        return false;
+
+                    var relativePath = x.FullPath.Substring(currentPath.Length + 1);
+                    return !relativePath.Contains("/"); // Direct children only
+                });
+
+                foreach (var item in currentItems.OrderByDescending(x => x.IsFolder).ThenBy(x => x.Name))
                 {
                     displayItems.Add(item);
                 }
             }
-            
+
             this.ItemsSource = displayItems;
         }
 
@@ -144,14 +172,42 @@ namespace LessonsManager.Controls
         {
             if (CurrentFolder != null && CurrentFolder.Level > 0)
             {
-                var parentPath = string.Join("/", CurrentFolder.FullPath.Split('/').Take(CurrentFolder.FullPath.Split('/').Length - 1));
-                var parent = TreeItems.FirstOrDefault(x => x.FullPath == parentPath);
+                var pathParts = CurrentFolder.FullPath.Split('/');
+                var parentPath = string.Join("/", pathParts.Take(pathParts.Length - 1));
+                var parent = TreeItems?.FirstOrDefault(x => x.FullPath == parentPath);
                 CurrentFolder = parent;
             }
             else
             {
                 NavigateToRoot();
             }
+        }
+
+        public void NavigateToFolder(TreeItem folder)
+        {
+            if (folder != null && folder.IsFolder)
+            {
+                CurrentFolder = folder;
+            }
+        }
+
+        public ObservableCollection<string> GetBreadcrumbPath()
+        {
+            var breadcrumb = new ObservableCollection<string>();
+
+            if (CurrentFolder != null)
+            {
+                var parts = CurrentFolder.FullPath.Split('/');
+                foreach (var part in parts)
+                {
+                    if (!string.IsNullOrWhiteSpace(part))
+                    {
+                        breadcrumb.Add(part);
+                    }
+                }
+            }
+
+            return breadcrumb;
         }
     }
 }

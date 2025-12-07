@@ -1,0 +1,87 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=mscorlib">
+    <!-- Colors and Brushes -->
+    <Color x:Key="PrimaryColor">#6B4226</Color>
+    <Color x:Key="PrimaryLightColor">#8C5E3C</Color>
+    <Color x:Key="PrimaryLighterColor">#E8D9C8</Color>
+    
+    <!-- Accent Colors -->
+    <Color x:Key="AccentColor">#D98F5B</Color>
+    <Color x:Key="AccentLightColor">#F0C7A8</Color>
+    
+    <!-- Background Colors -->
+    <Color x:Key="BackgroundColor">#F6F4F2</Color>
+    <Color x:Key="SurfaceColor">#FFFFFF</Color>
+    
+    <!-- Text Colors -->
+    <Color x:Key="PrimaryTextColor">#2E1F18</Color>
+    <Color x:Key="SecondaryTextColor">#7F6B60</Color>
+    <Color x:Key="DisabledTextColor">#B8B0AB</Color>
+    
+    <!-- Status Colors -->
+    <Color x:Key="SuccessColor">#2ECC71</Color>
+    <Color x:Key="WarningColor">#F39C12</Color>
+    <Color x:Key="ErrorColor">#E74C3C</Color>
+    <Color x:Key="InfoColor">#3498DB</Color>
+    
+    <!-- Border & Divider -->
+    <Color x:Key="BorderColor">#E9E3E1</Color>
+    <Color x:Key="DividerColor">#E0D6D0</Color>
+    
+    <!-- Hover & Pressed States -->
+    <Color x:Key="HoverOverlayColor">#0A000000</Color>
+    <Color x:Key="PressedOverlayColor">#14000000</Color>
+    
+    <!-- Brushes -->
+    <SolidColorBrush x:Key="PrimaryBrush" Color="{StaticResource PrimaryColor}"/>
+    <SolidColorBrush x:Key="PrimaryLightBrush" Color="{StaticResource PrimaryLightColor}"/>
+    <SolidColorBrush x:Key="PrimaryLighterBrush" Color="{StaticResource PrimaryLighterColor}"/>
+    <SolidColorBrush x:Key="AccentBrush" Color="{StaticResource AccentColor}"/>
+    <SolidColorBrush x:Key="AccentLightBrush" Color="{StaticResource AccentLightColor}"/>
+    <SolidColorBrush x:Key="BackgroundBrush" Color="{StaticResource BackgroundColor}"/>
+    <SolidColorBrush x:Key="SurfaceBrush" Color="{StaticResource SurfaceColor}"/>
+    <SolidColorBrush x:Key="PrimaryTextBrush" Color="{StaticResource PrimaryTextColor}"/>
+    <SolidColorBrush x:Key="SecondaryTextBrush" Color="{StaticResource SecondaryTextColor}"/>
+    <SolidColorBrush x:Key="DisabledTextBrush" Color="{StaticResource DisabledTextColor}"/>
+    <SolidColorBrush x:Key="BorderBrush" Color="{StaticResource BorderColor}"/>
+    <SolidColorBrush x:Key="DividerBrush" Color="{StaticResource DividerColor}"/>
+    <SolidColorBrush x:Key="SuccessBrush" Color="{StaticResource SuccessColor}"/>
+    <SolidColorBrush x:Key="WarningBrush" Color="{StaticResource WarningColor}"/>
+    <SolidColorBrush x:Key="ErrorBrush" Color="{StaticResource ErrorColor}"/>
+    <SolidColorBrush x:Key="InfoBrush" Color="{StaticResource InfoColor}"/>
+    
+    <!-- Transparent Brushes -->
+    <SolidColorBrush x:Key="TransparentBrush" Color="Transparent"/>
+    <SolidColorBrush x:Key="HoverOverlayBrush" Color="{StaticResource HoverOverlayColor}"/>
+    <SolidColorBrush x:Key="PressedOverlayBrush" Color="{StaticResource PressedOverlayColor}"/>
+    
+    <!-- Common Opacity Values -->
+    <sys:Double x:Key="DisabledOpacity">0.5</sys:Double>
+    <sys:Double x:Key="MediumOpacity">0.7</sys:Double>
+    
+    <!-- Shadow Effect Definitions -->
+    <Style x:Key="CardShadow" TargetType="Control">
+        <Setter Property="Effect">
+            <Setter.Value>
+                <DropShadowEffect BlurRadius="12"
+                               Direction="270"
+                               ShadowDepth="2"
+                               Opacity="0.08"
+                               Color="Black"/>
+            </Setter.Value>
+        </Setter>
+    </Style>
+    
+    <Style x:Key="ElevatedShadow" TargetType="Control">
+        <Setter Property="Effect">
+            <Setter.Value>
+                <DropShadowEffect BlurRadius="16"
+                               Direction="270"
+                               ShadowDepth="4"
+                               Opacity="0.12"
+                               Color="Black"/>
+            </Setter.Value>
+        </Setter>
+    </Style>
+</ResourceDictionary>

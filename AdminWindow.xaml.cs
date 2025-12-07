@@ -1,461 +1,348 @@
-using System.Text;
+using System;
+using System.Collections.ObjectModel;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
-using System.IO;
-using System.Collections.ObjectModel;
-using Microsoft.Win32;
+using MaterialDesignThemes.Wpf;
 using LessonsManager.Models;
 using LessonsManager.Data;
-using LessonsManager.Controls;
-using System.Runtime.InteropServices; // חדש
 
 namespace LessonsManager
 {
     public partial class AdminWindow : Window
     {
-        private readonly LessonRepository _repository;
-
-        // חדש: Import Win32 API functions for kiosk mode restoration
-        [DllImport("user32.dll")]
-        private static extern IntPtr FindWindow(string lpClassName, string lpWindowName);
-        
-        [DllImport("user32.dll")]
-        private static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
-        
-        [DllImport("user32.dll")]
-        private static extern bool SystemParametersInfo(int uiAction, int uiParam, IntPtr pvParam, int fWinIni);
-
-        [DllImport("user32.dll")]
-        private static extern bool PostMessage(IntPtr hWnd, uint Msg, IntPtr wParam, IntPtr lParam);
-
-        [DllImport("user32.dll")]
-        private static extern IntPtr FindWindowEx(IntPtr hwndParent, IntPtr hwndChildAfter, string lpszClass, string lpszWindow);
-
-        private const int SW_SHOW = 5;
-        private const int SPI_SETSCREENSAVERRUNNING = 97;
-        private const uint WM_COMMAND = 0x0111;
+        private ObservableCollection<Lesson> lessons;
+        private LessonRepository _repository;
 
         public AdminWindow()
         {
             InitializeComponent();
             _repository = new LessonRepository();
-            this.KeyDown += AdminWindow_KeyDown;
-            
-            // Initialize navigation
-            LessonsTreeView.FolderChanged += (s, e) => UpdatePathDisplay();
+            LoadLessons();
         }
 
-        private void InitializeControls()
+        private void LoadLessons()
         {
-            YearComboBox.SelectedIndex = 0;
-            LoadSubjects();
-            
-            SubjectComboBox.SelectionChanged += SubjectComboBox_SelectionChanged;
-        }
-
-        private void LoadSubjects()
-        {
-            var subjects = _repository.GetAvailableSubjects();
-            SubjectComboBox.ItemsSource = subjects;
-            
-            if (subjects.Count > 0)
-                SubjectComboBox.SelectedIndex = 0;
-        }
-
-        private void SubjectComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            string? selectedSubject = SubjectComboBox.SelectedItem as string;
-            if (!string.IsNullOrEmpty(selectedSubject))
-            {
-                var subSubjects = _repository.GetAvailableSubSubjects(selectedSubject);
-                SubSubjectComboBox.ItemsSource = subSubjects;
-                
-                if (subSubjects.Count > 0)
-                    SubSubjectComboBox.SelectedIndex = 0;
-            }
-        }
-
-        private void AdminWindow_KeyDown(object sender, KeyEventArgs e)
-        {
-            if (e.Key == Key.Escape)
-            {
-                BackButton_Click(sender, e);
-            }
-        }
-
-        private void LoadExistingLessons()
-        {
-            var treeItems = new ObservableCollection<TreeItem>();
-            var subjects = _repository.GetAllSubjects();
-            
-            foreach (var subject in subjects)
-            {
-                var subjectItem = new TreeItem(subject.Name, subject.Name, $"subject_{subject.Name}", true, 0);
-                treeItems.Add(subjectItem);
-                
-                foreach (var subSubject in subject.SubSubjects)
-                {
-                    var subSubjectPath = $"{subject.Name}/{subSubject.Name}";
-                    var subSubjectItem = new TreeItem(subSubject.Name, subSubjectPath, $"subsubject_{subSubject.Name}", true, 1);
-                    treeItems.Add(subSubjectItem);
-                    
-                    foreach (var lesson in subSubject.Lessons)
-                    {
-                        var lessonPath = $"{subSubjectPath}/{lesson.Title}";
-                        var lessonItem = new TreeItem($"{lesson.Title} ({lesson.Year})", lessonPath, lesson.Id, false, 2, lesson);
-                        treeItems.Add(lessonItem);
-                    }
-                }
-            }
-            
-            LessonsTreeView.TreeItems = treeItems;
-        }
-
-        private void BackButton_Click(object sender, RoutedEventArgs e)
-        {
-            MainWindow mainWindow = new MainWindow();
-            mainWindow.Show();
-            this.Close();
-        }
-
-        private void BrowseButton_Click(object sender, RoutedEventArgs e)
-        {
-            OpenFileDialog openFileDialog = new OpenFileDialog
-            {
-                Filter = "MP3 Files (*.mp3)|*.mp3|All files (*.*)|*.*",
-                Title = "בחר קובץ MP3"
-            };
-
-            if (openFileDialog.ShowDialog() == true)
-            {
-                FilePathTextBox.Text = openFileDialog.FileName;
-            }
-        }
-
-        private void BrowsePdfButton_Click(object sender, RoutedEventArgs e)
-        {
-            OpenFileDialog openFileDialog = new OpenFileDialog
-            {
-                Filter = "PDF Files (*.pdf)|*.pdf|All files (*.*)|*.*",
-                Title = "בחר קובץ PDF"
-            };
-
-            if (openFileDialog.ShowDialog() == true)
-            {
-                PdfPathTextBox.Text = openFileDialog.FileName;
-            }
-        }
-
-        private void UploadButton_Click(object sender, RoutedEventArgs e)
-        {
-            string subject = SubjectComboBox.Text.Trim();
-            string subSubject = SubSubjectComboBox.Text.Trim();
-            string lessonTitle = LessonTitleTextBox.Text.Trim();
-            string year = (YearComboBox.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? "2024";
-            string filePath = FilePathTextBox.Text;
-            string pdfPath = PdfPathTextBox.Text;
-
-            if (string.IsNullOrEmpty(subject) || string.IsNullOrEmpty(subSubject) || string.IsNullOrEmpty(lessonTitle))
-            {
-                UploadStatus.Text = "אנא מלא את כל השדות הנדרשים";
-                UploadStatus.Foreground = new SolidColorBrush(Color.FromRgb(243, 156, 18));
-                return;
-            }
-
-            if (string.IsNullOrEmpty(filePath) || !File.Exists(filePath))
-            {
-                UploadStatus.Text = "אנא בחר קובץ MP3 תקין";
-                UploadStatus.Foreground = new SolidColorBrush(Color.FromRgb(243, 156, 18));
-                return;
-            }
-
-            // Check PDF file if provided
-            if (!string.IsNullOrEmpty(pdfPath) && !File.Exists(pdfPath))
-            {
-                UploadStatus.Text = "קובץ ה-PDF שנבחר לא קיים";
-                UploadStatus.Foreground = new SolidColorBrush(Color.FromRgb(243, 156, 18));
-                return;
-            }
-
             try
             {
-                var lesson = new Lesson
-                {
-                    Title = lessonTitle,
-                    Subject = subject,
-                    SubSubject = subSubject,
-                    Year = year,
-                    HasPdf = !string.IsNullOrEmpty(pdfPath)
-                };
+                // טען את כל הנושאים עם השיעורים שלהם
+                var subjects = _repository.GetAllSubjects();
 
-                if (_repository.AddLesson(lesson, filePath, pdfPath))
+                // המר למבנה שטוח של שיעורים עבור הרשימה
+                var allLessons = new List<Lesson>();
+                foreach (var subject in subjects)
                 {
-                    UploadStatus.Text = $"השיעור '{lessonTitle}' הועלה בהצלחה!";
-                    UploadStatus.Foreground = new SolidColorBrush(Color.FromRgb(39, 174, 96));
+                    foreach (var subSubject in subject.SubSubjects)
+                    {
+                        allLessons.AddRange(subSubject.Lessons);
+                    }
+                }
 
-                    ClearUploadForm();
-                    LoadSubjects();
-                    LoadExistingLessons();
+                lessons = new ObservableCollection<Lesson>(allLessons.OrderBy(l => l.Title));
+                LessonsListView.ItemsSource = lessons;
+
+                // הצג הודעה
+                if (lessons.Count == 0)
+                {
+                    ShowNotification("אין שיעורים במערכת. לחץ על 'הוסף שיעור' כדי להתחיל.", 4000);
                 }
                 else
                 {
-                    UploadStatus.Text = "שגיאה בהעלאת השיעור";
-                    UploadStatus.Foreground = new SolidColorBrush(Color.FromRgb(231, 76, 60));
+                    ShowNotification($"נטענו {lessons.Count} שיעורים מהמערכת", 2000);
                 }
             }
             catch (Exception ex)
             {
-                UploadStatus.Text = $"שגיאה: {ex.Message}";
-                UploadStatus.Foreground = new SolidColorBrush(Color.FromRgb(231, 76, 60));
+                ShowErrorMessage($"שגיאה בטעינת השיעורים: {ex.Message}");
+                lessons = new ObservableCollection<Lesson>();
+                LessonsListView.ItemsSource = lessons;
+            }
+        }
+
+        private void AddLessonButton_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var dialog = new AddEditLessonDialog();
+                dialog.Owner = this;
+
+                if (dialog.ShowDialog() == true)
+                {
+                    var newLesson = dialog.Lesson;
+
+                    // שמור בקובץ/מסד נתונים דרך הרפוזיטורי
+                    bool success = _repository.AddLesson(
+                        newLesson,
+                        newLesson.FilePath,
+                        string.IsNullOrEmpty(newLesson.PdfPath) ? null : newLesson.PdfPath
+                    );
+                    if (success)
+                    {
+                        // הוסף לרשימה
+                        lessons.Add(newLesson);
+
+                        // הצג הודעת הצלחה
+                        ShowSuccessNotification($"השיעור '{newLesson.Title}' נוסף בהצלחה!");
+
+                        // גלול לפריט החדש
+                        LessonsListView.ScrollIntoView(newLesson);
+                    }
+                    else
+                    {
+                        ShowErrorMessage("שגיאה בהוספת השיעור למערכת");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                ShowErrorMessage($"שגיאה בהוספת השיעור: {ex.Message}");
+            }
+        }
+
+        private void EditButton_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var button = sender as Button;
+                var lesson = button?.Tag as Lesson;
+
+                if (lesson == null)
+                {
+                    ShowErrorMessage("לא נמצא שיעור לעריכה");
+                    return;
+                }
+
+                var dialog = new AddEditLessonDialog(lesson);
+                dialog.Owner = this;
+
+                if (dialog.ShowDialog() == true)
+                {
+                    var updatedLesson = dialog.Lesson;
+
+                    // עדכן בקובץ/מסד נתונים דרך הרפוזיטורי
+                    bool success = _repository.UpdateLesson(updatedLesson);
+
+                    if (success)
+                    {
+                        // עדכן ברשימה
+                        var index = lessons.IndexOf(lesson);
+                        if (index >= 0)
+                        {
+                            lessons[index] = updatedLesson;
+                        }
+
+                        // רענן את התצוגה
+                        LessonsListView.Items.Refresh();
+
+                        ShowSuccessNotification($"השיעור '{updatedLesson.Title}' עודכן בהצלחה!");
+                    }
+                    else
+                    {
+                        ShowErrorMessage("שגיאה בעדכון השיעור במערכת");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                ShowErrorMessage($"שגיאה בעדכון השיעור: {ex.Message}");
             }
         }
 
         private void DeleteButton_Click(object sender, RoutedEventArgs e)
         {
-            if (LessonsTreeView.SelectedItem == null)
+            try
             {
-                MessageBox.Show("אנא בחר שיעור למחיקה", "בחירת שיעור", MessageBoxButton.OK, MessageBoxImage.Information);
-                return;
-            }
+                var button = sender as Button;
+                var lesson = button?.Tag as Lesson;
 
-            if (LessonsTreeView.SelectedItem is TreeItem selectedItem && !selectedItem.IsFolder)
-            {
-                var result = MessageBox.Show($"האם אתה בטוח שברצונך למחוק את השיעור '{selectedItem.Name}'?", 
-                                           "מחיקת שיעור", 
-                                           MessageBoxButton.YesNo, 
-                                           MessageBoxImage.Warning);
-
-                if (result == MessageBoxResult.Yes)
+                if (lesson == null)
                 {
-                    try
-                    {
-                        if (_repository.DeleteLesson(selectedItem.Id))
-                        {
-                            LoadExistingLessons();
-                            MessageBox.Show("השיעור נמחק בהצלחה", "מחיקה הצליחה", MessageBoxButton.OK, MessageBoxImage.Information);
-                        }
-                        else
-                        {
-                            MessageBox.Show("לא נמצא השיעור למחיקה", "שגיאה", MessageBoxButton.OK, MessageBoxImage.Error);
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        MessageBox.Show($"שגיאה במחיקת השיעור: {ex.Message}", "שגיאה", MessageBoxButton.OK, MessageBoxImage.Error);
-                    }
+                    ShowErrorMessage("לא נמצא שיעור למחיקה");
+                    return;
                 }
-            }
-            else
-            {
-                MessageBox.Show("ניתן למחוק רק שיעורים ספציפיים", "מחיקת שיעור", MessageBoxButton.OK, MessageBoxImage.Information);
-            }
-        }
 
-        private void LessonsTreeView_Drop(object sender, DragEventArgs e)
-        {
-            if (e.Data.GetData(typeof(TreeItem)) is TreeItem draggedItem && draggedItem.IsFolder)
-            {
-                try
+                // השתמש ב-CustomMessageBox במקום MessageBox.Show  
+                var messageBox = new CustomMessageBox(
+                    "מחיקת שיעור",
+                    $"האם אתה בטוח שברצונך למחוק את השיעור:\n\n'{lesson.Title}'\n\nפעולה זו תמחק גם את קובץ השמע ואינה ניתנת לביטול.",
+                    MessageType.Warning, // Changed from PackIconKind.DeleteAlert to MessageType.Warning  
+                    MessageButtons.YesNo // Corrected from 'true' to 'MessageButtons.YesNo'  
+                );
+                messageBox.Owner = this;
+
+                if (messageBox.ShowDialog() == MessageDialogResult.Yes)
                 {
-                    // Create USB folder
-                    string usbPath = GetUsbDrivePath();
-                    if (!string.IsNullOrEmpty(usbPath))
+                    // מחק דרך הרפוזיטורי (ימחק גם את הקובץ)  
+                    bool success = _repository.DeleteLesson(lesson.Id);
+
+                    if (success)
                     {
-                        string folderPath = System.IO.Path.Combine(usbPath, draggedItem.Name);
-                        Directory.CreateDirectory(folderPath);
-                        
-                        // Copy all lessons from this folder
-                        CopyFolderContents(draggedItem, folderPath);
-                        
-                        MessageBox.Show($"התיקיה '{draggedItem.Name}' הועברה להתקן בהצלחה", "העברה הצליחה", MessageBoxButton.OK, MessageBoxImage.Information);
+                        // מחק מהרשימה  
+                        lessons.Remove(lesson);
+
+                        ShowSuccessNotification($"השיעור '{lesson.Title}' נמחק בהצלחה");
                     }
                     else
                     {
-                        MessageBox.Show("חבר התקן USB תחילה", "חיבור התקן", MessageBoxButton.OK, MessageBoxImage.Warning);
+                        ShowErrorMessage("שגיאה במחיקת השיעור מהמערכת");
                     }
                 }
-                catch (Exception ex)
-                {
-                    MessageBox.Show($"שגיאה בהעברת התיקיה: {ex.Message}", "שגיאה", MessageBoxButton.OK, MessageBoxImage.Error);
-                }
-            }
-        }
-
-        private string GetUsbDrivePath()
-        {
-            var drives = DriveInfo.GetDrives();
-            foreach (var drive in drives)
-            {
-                if (drive.DriveType == DriveType.Removable && drive.IsReady)
-                {
-                    return drive.RootDirectory.FullName;
-                }
-            }
-            return "";
-        }
-
-        private void CopyFolderContents(TreeItem folderItem, string destinationPath)
-        {
-            var subjects = _repository.GetAllSubjects();
-            
-            foreach (var subject in subjects)
-            {
-                if (subject.Name == folderItem.Name)
-                {
-                    foreach (var subSubject in subject.SubSubjects)
-                    {
-                        string subFolderPath = System.IO.Path.Combine(destinationPath, subSubject.Name);
-                        Directory.CreateDirectory(subFolderPath);
-                        
-                        foreach (var lesson in subSubject.Lessons)
-                        {
-                            string sourcePath = _repository.GetLessonAudioPath(lesson.Id);
-                            if (File.Exists(sourcePath))
-                            {
-                                string fileName = $"{lesson.Title}_{lesson.Year}.mp3";
-                                string destPath = System.IO.Path.Combine(subFolderPath, fileName);
-                                File.Copy(sourcePath, destPath, true);
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        private void RefreshButton_Click(object sender, RoutedEventArgs e)
-        {
-            LoadExistingLessons();
-        }
-
-        private void ClearUploadForm()
-        {
-            LessonTitleTextBox.Clear();
-            SubjectComboBox.Text = "";
-            SubSubjectComboBox.Text = "";
-            YearComboBox.SelectedIndex = 0;
-            FilePathTextBox.Clear();
-            PdfPathTextBox.Clear();
-        }
-
-        protected override void OnClosing(System.ComponentModel.CancelEventArgs e)
-        {
-            e.Cancel = true;
-            base.OnClosing(e);
-        }
-
-        // Navigation functions
-        private void UpdatePathDisplay()
-        {
-            if (LessonsTreeView.CurrentFolder == null)
-            {
-                PathTextBlock.Text = "שורש";
-            }
-            else
-            {
-                PathTextBlock.Text = LessonsTreeView.CurrentFolder.FullPath;
-            }
-        }
-
-        private void NavBackButton_Click(object sender, RoutedEventArgs e)
-        {
-            LessonsTreeView.NavigateBack();
-        }
-
-        private void RootButton_Click(object sender, RoutedEventArgs e)
-        {
-            LessonsTreeView.NavigateToRoot();
-        }
-
-        // חדש: פונקציה להחזרת המערכת למצב רגיל (יציאה ממצב קיוסק)
-        private void RestoreSystem()
-        {
-            try
-            {
-                // Show taskbar - ניסיון מספר 1: ShowWindow
-                IntPtr taskbarWnd = FindWindow("Shell_TrayWnd", "");
-                if (taskbarWnd != IntPtr.Zero)
-                {
-                    ShowWindow(taskbarWnd, SW_SHOW);
-                    // ניסיון מספר 2: PostMessage
-                    PostMessage(taskbarWnd, WM_COMMAND, (IntPtr)419, IntPtr.Zero);
-                }
-
-                // Show desktop icons
-                IntPtr desktopWnd = FindWindow("Progman", "Program Manager");
-                if (desktopWnd != IntPtr.Zero)
-                {
-                    ShowWindow(desktopWnd, SW_SHOW);
-                    
-                    // נסה למצוא את ה-SysListView32 (אייקוני שולחן העבודה)
-                    IntPtr workerWnd = FindWindowEx(desktopWnd, IntPtr.Zero, "SHELLDLL_DefView", "");
-                    if (workerWnd != IntPtr.Zero)
-                    {
-                        IntPtr listView = FindWindowEx(workerWnd, IntPtr.Zero, "SysListView32", "");
-                        if (listView != IntPtr.Zero)
-                        {
-                            ShowWindow(listView, SW_SHOW);
-                        }
-                    }
-                }
-
-                // Enable screensaver
-                SystemParametersInfo(SPI_SETSCREENSAVERRUNNING, 0, IntPtr.Zero, 0);
-
-                // Restore registry settings
-                RegistryKey? key = Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Policies\System", true);
-                if (key != null)
-                {
-                    try
-                    {
-                        key.DeleteValue("NoAltTab", false);
-                    }
-                    catch { } // Ignore if doesn't exist
-                    
-                    try
-                    {
-                        key.DeleteValue("DisableTaskMgr", false);
-                    }
-                    catch { } // Ignore if doesn't exist
-                    
-                    key.Close();
-                }
-
-                // Force refresh - נסה להפעיל את Explorer מחדש
-                System.Threading.Thread.Sleep(100); // תן זמן למערכת לעבד
-
-                MessageBox.Show("יציאה ממצב קיוסק בוצעה בהצלחה", "יציאה ממצב קיוסק", MessageBoxButton.OK, MessageBoxImage.Information);
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Failed to restore system: {ex.Message}");
-                MessageBox.Show($"שגיאה ביציאה ממצב קיוסק: {ex.Message}", "שגיאה", MessageBoxButton.OK, MessageBoxImage.Warning);
+                ShowErrorMessage($"שגיאה במחיקת השיעור: {ex.Message}");
             }
         }
 
-        // חדש: אירוע לחיצה על כפתור יציאה ממצב קיוסק
-        private void ExitKioskButton_Click(object sender, RoutedEventArgs e)
+        private void PreviewButton_Click(object sender, RoutedEventArgs e)
         {
-            var result = MessageBox.Show(
-                "האם אתה בטוח שברצונך לצאת ממצב קיוסק?\nפעולה זו תחזיר את ה-Taskbar ואת כל אפשרויות המערכת.",
-                "יציאה ממצב קיוסק",
-                MessageBoxButton.YesNo,
-                MessageBoxImage.Question);
-
-            if (result == MessageBoxResult.Yes)
+            try
             {
-                // מחזיר את Windows למצב רגיל (taskbar, Alt+Tab, Task Manager וכו')
-                RestoreSystem();
+                // הצג את פאנל התצוגה המקדימה
+                LessonsPanel.Visibility = Visibility.Collapsed;
+                PreviewPanel.Visibility = Visibility.Visible;
 
-                // שימי לב: אין כאן Application.Current.Shutdown();
-                // האפליקציה נשארת פתוחה, רק מצב הקיוסק הוסר
+                // טען את מסך התלמידים
+                LoadStudentPreview();
+
+                ShowNotification("מוצג מצב תצוגה מקדימה - כפי שהתלמידים רואים", 3000);
             }
+            catch (Exception ex)
+            {
+                ShowErrorMessage($"שגיאה בהצגת תצוגה מקדימה: {ex.Message}");
+
+                // חזור למסך ניהול במקרה של שגיאה
+                PreviewPanel.Visibility = Visibility.Collapsed;
+                LessonsPanel.Visibility = Visibility.Visible;
+            }
+        }
+
+        private void ClosePreviewButton_Click(object sender, RoutedEventArgs e)
+        {
+            // חזור למסך ניהול
+            PreviewPanel.Visibility = Visibility.Collapsed;
+            LessonsPanel.Visibility = Visibility.Visible;
+
+            ShowNotification("חזרה למסך ניהול", 2000);
+        }
+
+        private void LoadStudentPreview()
+        {
+            try
+            {
+                // נקה תוכן קודם
+                StudentPreviewContainer.Child = null;
+
+                // צור instance של StudentWindow והצג את התוכן שלו
+                var studentWindow = new StudentWindow();
+
+                // קח את התוכן מהחלון והצג אותו בקונטיינר
+                if (studentWindow.Content is FrameworkElement content)
+                {
+                    studentWindow.Content = null; // הסר מהחלון המקורי
+                    StudentPreviewContainer.Child = content; // הוסף לקונטיינר
+                }
+            }
+            catch (Exception ex)
+            {
+                ShowErrorMessage($"שגיאה בטעינת תצוגה מקדימה: {ex.Message}");
+            }
+        }
+
+        private void BackButton_Click(object sender, RoutedEventArgs e)
+        {
+            // בדוק אם יש שינויים שלא נשמרו  
+            var messageBox = new CustomMessageBox(
+                "חזרה למסך הראשי",
+                "האם אתה בטוח שברצונך לחזור למסך הראשי?",
+                MessageType.Info, // Changed from PackIconKind.Home to MessageType.Info  
+                MessageButtons.YesNo // Corrected from 'true' to 'MessageButtons.YesNo'  
+            );
+            messageBox.Owner = this;
+
+            if (messageBox.ShowDialog() == MessageDialogResult.Yes)
+            {
+                var mainWindow = new MainWindow();
+                mainWindow.Show();
+                this.Close();
+            }
+        }
+
+        // =============== פונקציות עזר להצגת הודעות ===============
+
+        /// <summary>
+        /// הצג הודעת הצלחה בירוק עם סימן V
+        /// </summary>
+        private void ShowSuccessNotification(string message, int durationMs = 3000)
+        {
+            AdminSnackbar.MessageQueue?.Enqueue(
+                $"✓ {message}",
+                null,
+                null,
+                null,
+                false,
+                true,
+                TimeSpan.FromMilliseconds(durationMs));
+        }
+
+        /// <summary>
+        /// הצג הודעה רגילה
+        /// </summary>
+        private void ShowNotification(string message, int durationMs = 3000)
+        {
+            AdminSnackbar.MessageQueue?.Enqueue(
+                message,
+                null,
+                null,
+                null,
+                false,
+                true,
+                TimeSpan.FromMilliseconds(durationMs));
+        }
+
+        /// <summary>
+        /// הצג הודעת שגיאה עם CustomMessageBox
+        /// </summary>
+        private void ShowErrorMessage(string message)
+        {
+            var messageBox = new CustomMessageBox(
+                "שגיאה",
+                message,
+                MessageType.Error, // Changed from PackIconKind.AlertCircle to MessageType.Error
+                MessageButtons.OK
+            );
+            messageBox.Owner = this;
+            messageBox.ShowDialog();
+        }
+
+        /// <summary>
+        /// הצג הודעת אזהרה עם CustomMessageBox
+        /// </summary>
+        private void ShowWarningMessage(string message)
+        {
+            var messageBox = new CustomMessageBox(
+                "אזהרה",
+                message,
+                MessageType.Warning, // Changed from PackIconKind.Alert to MessageType.Warning
+                MessageButtons.OK
+            );
+            messageBox.Owner = this;
+            messageBox.ShowDialog();
+        }
+
+        /// <summary>
+        /// הצג דיאלוג אישור - מחזיר true אם המשתמש לחץ כן
+        /// </summary>
+        private bool ShowConfirmDialog(string title, string message)
+        {
+            var messageBox = new CustomMessageBox(
+                title,
+                message,
+                MessageType.Warning,
+                MessageButtons.YesNo
+            );
+            messageBox.Owner = this;
+            return messageBox.ShowDialog() == MessageDialogResult.Yes;
         }
     }
 }
